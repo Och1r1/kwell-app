@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroupSync — University Collaboration Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f2f7;
+    --surface: #ffffff;
+    --surface2: #f7f8fc;
+    --surface3: #eef0f7;
+    --border: #e2e5ef;
+    --text: #1a1d2e;
+    --text2: #5a5f7a;
+    --text3: #9095b0;
+    --accent: #4361ee;
+    --accent2: #3a0ca3;
+    --accent-light: #eef1fd;
+    --green: #2dc653;
+    --green-light: #eafbee;
+    --orange: #f77f00;
+    --orange-light: #fff4e6;
+    --red: #e63946;
+    --red-light: #fdecea;
+    --purple: #7b2d8b;
+    --purple-light: #f5edf7;
+    --sidebar-w: 220px;
+    --header-h: 60px;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 12px rgba(67,97,238,0.08);
+    --shadow-md: 0 4px 24px rgba(67,97,238,0.13);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+  button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+  input, textarea, select { font-family: inherit; outline: none; border: none; }
+  a { text-decoration: none; color: inherit; }
+  ul { list-style: none; }
+
+  /* ===== LAYOUT ===== */
+  #app { display: flex; height: 100vh; overflow: hidden; }
+  #sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10; }
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #topbar { height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0; }
+  #content { flex: 1; overflow-y: auto; padding: 24px; }
+  #content::-webkit-scrollbar { width: 6px; }
+  #content::-webkit-scrollbar-track { background: transparent; }
+  #content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar-logo { padding: 18px 16px 12px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+  .logo-text { font-weight: 700; font-size: 15px; color: var(--text); }
+  .logo-sub { font-size: 10px; color: var(--text3); font-weight: 400; }
+  .sidebar-section { padding: 16px 12px 4px; }
+  .sidebar-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); padding: 0 6px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); font-weight: 500; font-size: 13px; transition: all 0.15s; position: relative; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-light); color: var(--accent); }
+  .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+  .nav-badge.blue { background: var(--accent); }
+  .channel-item { padding: 6px 10px; display: flex; align-items: center; gap: 8px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); font-size: 13px; transition: all 0.15s; }
+  .channel-item:hover { background: var(--surface2); color: var(--text); }
+  .channel-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+  .channel-item .unread-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: auto; flex-shrink: 0; }
+  .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radius-sm); cursor: pointer; }
+  .user-chip:hover { background: var(--surface2); }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; color: #fff; flex-shrink: 0; }
+  .avatar.sm { width: 24px; height: 24px; font-size: 9px; }
+  .avatar.lg { width: 40px; height: 40px; font-size: 15px; }
+  .avatar.xl { width: 48px; height: 48px; font-size: 18px; }
+  .user-info .name { font-weight: 600; font-size: 13px; color: var(--text); }
+  .user-info .role { font-size: 11px; color: var(--text3); }
+  .online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); border: 2px solid var(--surface); margin-left: auto; flex-shrink: 0; }
+
+  /* ===== TOPBAR ===== */
+  .topbar-title { font-weight: 700; font-size: 16px; color: var(--text); }
+  .topbar-sub { font-size: 12px; color: var(--text3); margin-left: 4px; }
+  .topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--radius-sm); font-weight: 500; font-size: 13px; transition: all 0.15s; cursor: pointer; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-icon { padding: 7px; border-radius: var(--radius-sm); background: transparent; color: var(--text2); font-size: 16px; transition: all 0.15s; }
+  .btn-icon:hover { background: var(--surface2); color: var(--text); }
+
+  /* ===== PAGES ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== CARDS ===== */
+  .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; box-shadow: var(--shadow); }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-weight: 700; font-size: 15px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .section-icon { font-size: 18px; }
+
+  /* ===== GRID ===== */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* ===== STATS ===== */
+  .stat-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); }
+  .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .stat-icon.blue { background: var(--accent-light); }
+  .stat-icon.green { background: var(--green-light); }
+  .stat-icon.orange { background: var(--orange-light); }
+  .stat-icon.purple { background: var(--purple-light); }
+  .stat-value { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+  /* ===== MEMBER CARDS ===== */
+  .member-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 18px; box-shadow: var(--shadow); transition: box-shadow 0.2s; }
+  .member-card:hover { box-shadow: var(--shadow-md); }
+  .member-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .member-name { font-weight: 700; font-size: 14px; }
+  .member-role { font-size: 11px; color: var(--text3); }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+  .skill-tag { background: var(--accent-light); color: var(--accent); font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .contrib-bar-wrap { margin-top: 10px; }
+  .contrib-bar-label { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .contrib-bar-label span:first-child { font-size: 11px; color: var(--text3); }
+  .contrib-bar-label span:last-child { font-size: 12px; font-weight: 700; color: var(--text); }
+  .contrib-bar { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+  .contrib-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), #7b8fff); transition: width 0.6s ease; }
+  .member-stats-row { display: flex; gap: 12px; margin-top: 12px; }
+  .member-stat { flex: 1; text-align: center; background: var(--surface2); border-radius: 8px; padding: 8px 4px; }
+  .member-stat-val { font-size: 18px; font-weight: 700; color: var(--text); }
+  .member-stat-lbl { font-size: 10px; color: var(--text3); }
+  .workload-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .workload-badge.low { background: var(--green-light); color: #1a7a32; }
+  .workload-badge.medium { background: var(--orange-light); color: #8a4400; }
+  .workload-badge.high { background: var(--red-light); color: #a0111f; }
+
+  /* ===== AI DELEGATOR ===== */
+  .ai-panel { background: linear-gradient(135deg, #f0f3ff 0%, #eef8f0 100%); border: 1px solid #d4dcff; border-radius: var(--radius); padding: 20px; }
+  .ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .ai-badge { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; letter-spacing: 0.05em; }
+  .task-input-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+  .task-input-wrap { flex: 1; min-width: 200px; }
+  .inp { width: 100%; padding: 9px 13px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); background: var(--surface); transition: border-color 0.15s; }
+  .inp:focus { border-color: var(--accent); }
+  .inp-select { appearance: none; cursor: pointer; }
+  .task-recommend { background: var(--surface); border: 1.5px dashed var(--accent); border-radius: var(--radius-sm); padding: 14px; margin-top: 12px; display: none; }
+  .task-recommend.show { display: block; }
+  .recommend-header { font-weight: 700; font-size: 13px; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .recommend-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .assign-score { display: flex; align-items: center; gap: 6px; }
+  .score-bar { width: 80px; height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+  .score-fill { height: 100%; background: var(--green); border-radius: 3px; }
+  .reason-text { font-size: 12px; color: var(--text2); margin-top: 6px; font-style: italic; }
+
+  /* ===== TASK BOARD ===== */
+  .board-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 4px; }
+  .board-col { background: var(--surface2); border-radius: var(--radius); padding: 14px; min-height: 400px; border: 1px solid var(--border); }
+  .board-col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .col-title { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 7px; }
+  .col-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .col-dot.todo { background: var(--text3); }
+  .col-dot.inprogress { background: var(--orange); }
+  .col-dot.done { background: var(--green); }
+  .col-count { background: var(--border); color: var(--text2); font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; cursor: grab; box-shadow: 0 1px 4px rgba(0,0,0,0.05); transition: box-shadow 0.15s, transform 0.15s; user-select: none; }
+  .task-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .task-card.dragging { opacity: 0.5; transform: rotate(2deg); box-shadow: var(--shadow-md); }
+  .task-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .task-title { font-weight: 600; font-size: 13px; color: var(--text); line-height: 1.3; }
+  .priority-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
+  .priority-badge.high { background: var(--red-light); color: var(--red); }
+  .priority-badge.medium { background: var(--orange-light); color: var(--orange); }
+  .priority-badge.low { background: var(--green-light); color: #1a7a32; }
+  .task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .task-deadline { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+  .task-deadline.overdue { color: var(--red); }
+  .task-assignee { margin-left: auto; display: flex; }
+  .task-skill-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+  .task-skill-tag { background: var(--surface3); color: var(--text3); font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+  .drop-zone { border: 2px dashed var(--accent); border-radius: var(--radius-sm); padding: 12px; text-align: center; color: var(--accent); font-size: 12px; display: none; margin-bottom: 10px; }
+  .drop-zone.active { display: block; }
+  .board-col.drag-over { background: var(--accent-light); }
+
+  /* ===== CHAT ===== */
+  .chat-layout { display: flex; height: calc(100vh - var(--header-h) - 48px); gap: 0; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+  .chat-sidebar { width: 200px; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; background: var(--surface2); }
+  .chat-sidebar-section { padding: 12px 10px 4px; }
+  .chat-sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); padding: 0 6px 6px; }
+  .dm-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.15s; position: relative; }
+  .dm-item:hover { background: var(--surface3); color: var(--text); }
+  .dm-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+  .dm-online { width: 7px; height: 7px; border-radius: 50%; background: var(--green); border: 1.5px solid var(--surface2); position: absolute; bottom: 8px; left: 22px; }
+  .chat-main { flex: 1; display: flex; flex-direction: column; }
+  .chat-header { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .chat-title { font-weight: 700; font-size: 14px; }
+  .chat-desc { font-size: 12px; color: var(--text3); margin-left: 6px; }
+  .chat-members-row { margin-left: auto; display: flex; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .msg-row { display: flex; gap: 10px; }
+  .msg-body { flex: 1; }
+  .msg-top { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+  .msg-name { font-weight: 700; font-size: 13px; }
+  .msg-time { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .msg-text { font-size: 13px; color: var(--text2); line-height: 1.5; background: var(--surface2); padding: 8px 12px; border-radius: 0 10px 10px 10px; display: inline-block; max-width: 520px; }
+  .msg-text.own { background: var(--accent-light); color: var(--text); border-radius: 10px 0 10px 10px; }
+  .msg-row.own { flex-direction: row-reverse; }
+  .msg-row.own .msg-top { flex-direction: row-reverse; }
+  .msg-row.own .msg-body { display: flex; flex-direction: column; align-items: flex-end; }
+  .read-by { font-size: 10px; color: var(--text3); margin-top: 3px; }
+  .chat-input-bar { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; }
+  .chat-input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; color: var(--text); background: var(--surface2); resize: none; max-height: 100px; line-height: 1.4; transition: border-color 0.15s; }
+  .chat-input:focus { border-color: var(--accent); background: var(--surface); }
+  .send-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: background 0.15s; }
+  .send-btn:hover { background: var(--accent2); }
+
+  /* ===== FILES ===== */
+  .file-upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface2); }
+  .file-upload-zone:hover, .file-upload-zone.dragover { border-color: var(--accent); background: var(--accent-light); }
+  .upload-icon { font-size: 36px; margin-bottom: 10px; }
+  .upload-text { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .upload-sub { font-size: 12px; color: var(--text3); }
+  .file-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .file-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: box-shadow 0.15s; }
+  .file-item:hover { box-shadow: var(--shadow); }
+  .file-icon { font-size: 24px; flex-shrink: 0; width: 36px; text-align: center; }
+  .file-name { font-weight: 600; font-size: 13px; color: var(--text); }
+  .file-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .file-actions { margin-left: auto; display: flex; gap: 6px; }
+  .search-bar { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+  .search-bar input { flex: 1; font-size: 13px; color: var(--text); background: transparent; }
+  .filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-tab { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); color: var(--text2); transition: all 0.15s; }
+  .filter-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ===== MODALS ===== */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,29,46,0.45); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius); padding: 24px; width: 480px; max-width: 95vw; box-shadow: 0 8px 40px rgba(0,0,0,0.18); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .modal-title { font-weight: 700; font-size: 16px; }
+  .modal-close { background: none; font-size: 20px; color: var(--text3); cursor: pointer; }
+  .modal-close:hover { color: var(--text); }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-group { flex: 1; }
+
+  /* ===== TOAST ===== */
+  #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+  .toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--text); color: #fff; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; box-shadow: var(--shadow-md); animation: slideIn 0.3s ease; min-width: 240px; }
+  .toast.success { background: #1a7a32; }
+  .toast.error { background: var(--red); }
+  .toast.info { background: var(--accent); }
+  @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeOut { to { opacity: 0; transform: translateX(60px); } }
+
+  /* ===== PROGRESS RING ===== */
+  .progress-ring-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .progress-ring-wrap svg { transform: rotate(-90deg); }
+  .progress-ring-label { position: absolute; font-weight: 700; font-size: 13px; color: var(--text); }
+
+  /* ===== TABS ===== */
+  .tab-bar { display: flex; gap: 0; border-bottom: 1.5px solid var(--border); margin-bottom: 18px; }
+  .tab { padding: 9px 18px; font-size: 13px; font-weight: 500; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1.5px; transition: all 0.15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+
+  /* ===== DASHBOARD SPECIFIC ===== */
+  .activity-list { display: flex; flex-direction: column; gap: 10px; }
+  .activity-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--surface3); }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .activity-text { font-size: 13px; color: var(--text2); line-height: 1.4; }
+  .activity-text strong { color: var(--text); }
+  .activity-time { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .quick-task-list { display: flex; flex-direction: column; gap: 8px; }
+  .quick-task { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface2); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+  .quick-task-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .quick-task-assignee { font-size: 11px; color: var(--text3); }
+
+  /* ===== RESPONSIVE HELPERS ===== */
+  .mb-4 { margin-bottom: 16px; }
+  .mb-3 { margin-bottom: 12px; }
+  .mb-2 { margin-bottom: 8px; }
+  .mt-4 { margin-top: 16px; }
+  .mt-3 { margin-top: 12px; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .ml-auto { margin-left: auto; }
+  .text-sm { font-size: 12px; }
+  .text-muted { color: var(--text3); }
+  .fw-700 { font-weight: 700; }
+  .page-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+
+  /* ===== CONTRIBUTION CHART ===== */
+  .contrib-summary-bar { display: flex; height: 20px; border-radius: 10px; overflow: hidden; gap: 2px; }
+  .contrib-seg { height: 100%; transition: flex 0.6s ease; }
+  .contrib-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+  .contrib-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); padding: 8px 12px; border-bottom: 1.5px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--surface3); font-size: 13px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">GS</div>
+      <div>
+        <div class="logo-text">GroupSync</div>
+        <div class="logo-sub">CS401 — Team Alpha</div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Navigation</div>
+      <ul>
+        <li class="nav-item active" onclick="showPage('dashboard')">
+          <span class="nav-icon">🏠</span> Dashboard
+        </li>
+        <li class="nav-item" onclick="showPage('tasks')">
+          <span class="nav-icon">📋</span> Task Board
+          <span class="nav-badge blue" id="task-badge">8</span>
+        </li>
+        <li class="nav-item" onclick="showPage('ai')">
+          <span class="nav-icon">🤖</span> AI Delegator
+        </li>
+        <li class="nav-item" onclick="showPage('contrib')">
+          <span class="nav-icon">📊</span> Contributions
+        </li>
+        <li class="nav-item" onclick="showPage('files')">
+          <span class="nav-icon">📁</span> Files
+          <span class="nav-badge blue">12</span>
+        </li>
+        <li class="nav-item" onclick="showPage('chat')">
+          <span class="nav-icon">💬</span> Chat
+          <span class="nav-badge" id="msg-badge">3</span>
+        </li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Channels</div>
+      <ul id="channel-list">
+        <li class="channel-item active" onclick="switchChannel('general')">
+          <span style="color:var(--text3)">#</span> general
+          <span class="unread-dot"></span>
+        </li>
+        <li class="channel-item" onclick="switchChannel('research')">
+          <span style="color:var(--text3)">#</span> research
+        </li>
+        <li class="channel-item" onclick="switchChannel('coding')">
+          <span style="color:var(--text3)">#</span> coding
+        </li>
+        <li class="channel-item" onclick="switchChannel('deadlines')">
+          <span style="color:var(--text3)">#</span> deadlines
+        </li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar" style="background:#4361ee">YO</div>
+        <div class="user-info">
+          <div class="name">You (Omar)</div>
+          <div class="role">Team Lead</div>
+        </div>
+        <div class="online-dot"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div id="main">
+    <div id="topbar">
+      <div>
+        <span class="topbar-title" id="page-title">Dashboard</span>
+        <span class="topbar-sub" id="page-sub">— Overview</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openModal('addTaskModal')">＋ Add Task</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('addMemberModal')">＋ Add Member</button>
+      </div>
+    </div>
+    <div id="content">
+
+      <!-- ===== DASHBOARD PAGE ===== -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-title">Welcome back, Omar 👋</div>
+        <div class="page-sub">Here's what's happening with Team Alpha today.</div>
+        <div class="grid-4 mb-4">
+          <div class="stat-card">
+            <div class="stat-icon blue">📋</div>
+            <div>
+              <div class="stat-value" id="stat-total-tasks">8</div>
+              <div class="stat-label">Total Tasks</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">✅</div>
+            <div>
+              <div class="stat-value" id="stat-completed">3</div>
+              <div class="stat-label">Completed</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">⏳</div>
+            <div>
+              <div class="stat-value" id="stat-inprogress">3</div>
+              <div class="stat-label">In Progress</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple">👥</div>
+            <div>
+              <div class="stat-value">5</div>
+              <div class="stat-label">Team Members</div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="section-icon">🔥</span> Active Tasks</div>
+              <button class="btn btn-ghost btn-sm" onclick="showPage('tasks')">View All</button>
+            </div>
+            <div class="quick-task-list" id="dashboard-tasks"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="section-icon">🕐</span> Recent Activity</div>
+            </div>
+            <div class="activity-list" id="activity-list"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="section-icon">📊</span> Team Contribution Overview</div>
+          </div>
+          <div class="contrib-summary-bar" id="dash-contrib-bar"></div>
+          <div class="contrib-legend" id="dash-contrib-legend"></div>
+        </div>
+      </div>
+
+      <!-- ===== TASK BOARD PAGE ===== -->
+      <div class="page" id="page-tasks">
+        <div class="page-title">Task Board</div>
+        <div class="page-sub">Drag and drop tasks to update their status.</div>
+        <div class="board-columns">
+          <div class="board-col" id="col-todo" ondragover="onDragOver(event,'todo')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'todo')">
+            <div class="board-col-header">
+              <div class="col-title"><span class="col-dot todo"></span> To Do</div>
+              <span class="col-count" id="count-todo">0</span>
+            </div>
+            <div class="drop-zone" id="dz-todo">Drop here</div>
+            <div id="tasks-todo"></div>
+          </div>
+          <div class="board-col" id="col-inprogress" ondragover="onDragOver(event,'inprogress')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'inprogress')">
+            <div class="board-col-header">
+              <div class="col-title"><span class="col-dot inprogress"></span> In Progress</div>
+              <span class="col-count" id="count-inprogress">0</span>
+            </div>
+            <div class="drop-zone" id="dz-inprogress">Drop here</div>
+            <div id="tasks-inprogress"></div>
+          </div>
+          <div class="board-col" id="col-done" ondragover="onDragOver(event,'done')" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'done')">
+            <div class="board-col-header">
+              <div class="col-title"><span class="col-dot done"></span> Completed</div>
+              <span class="col-count" id="count-done">0</span>
+            </div>
+            <div class="drop-zone" id="dz-done">Drop here</div>
+            <div id="tasks-done"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== AI DELEGATOR PAGE ===== -->
+      <div class="page" id="page-ai">
+        <div class="page-title">AI Task Delegator</div>
+        <div class="page-sub">Automatically assign tasks to the best-matched team member based on skills and workload.</div>
+        <div class="ai-panel mb-4">
+          <div class="ai-header">
+            <span style="font-size:22px">🤖</span>
+            <span style="font-weight:700;font-size:15px">Smart Assignment Engine</span>
+            <span class="ai-badge">RULE-BASED AI</span>
+          </div>
+          <div class="task-input-row mb-3">
+            <div class="task-input-wrap">
+              <label class="form-label">Task Title</label>
+              <input class="inp" id="ai-task-title" placeholder="e.g. Write literature review section..." />
+            </div>
+            <div class="task-input-wrap" style="max-width:160px">
+              <label class="form-label">Required Skill</label>
+              <select class="inp inp-select" id="ai-task-skill">
+                <option value="research">Research</option>
+                <option value="coding">Coding</option>
+                <option value="writing">Writing</option>
+                <option value="presentation">Presentation</option>
+                <option value="design">Design</option>
+                <option value="analysis">Analysis</option>
+              </select>
+            </div>
+            <div class="task-input-wrap" style="max-width:130px">
+              <label class="form-label">Priority</label>
+              <select class="inp inp-select" id="ai-task-priority">
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div style="padding-top:22px">
+              <button class="btn btn-primary" onclick="runAIDelegator()">🤖 Analyse &amp; Assign</button>
+            </div>
+          </div>
+          <div class="task-recommend" id="ai-recommend">
+            <div class="recommend-header">✨ Recommendation</div>
+            <div id="ai-recommend-content"></div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn btn-primary btn-sm" onclick="acceptAIAssignment()">✓ Accept &amp; Create Task</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ai-recommend').classList.remove('show')">Dismiss</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="section-icon">👥</span> Team Skill Matrix &amp; Availability</div>
+          </div>
+          <div class="table-wrap">
+            <table id="skill-matrix-table">
+              <thead><tr>
+                <th>Member</th>
+                <th>Skills</th>
+                <th>Active Tasks</th>
+                <th>Workload</th>
+                <th>Availability</th>
+              </tr></thead>
+              <tbody id="skill-matrix-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CONTRIBUTIONS PAGE ===== -->
+      <div class="page" id="page-contrib">
+        <div class="page-title">Contribution Tracker</div>
+        <div class="page-sub">Track and visualise each member's contribution to the project.</div>
+        <div class="grid-3 mb-4" id="contrib-cards"></div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="section-icon">📈</span> Detailed Contribution Summary</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Member</th>
+                <th>Tasks Done</th>
+                <th>Active</th>
+                <th>Messages</th>
+                <th>Updates</th>
+                <th>Contribution %</th>
+              </tr></thead>
+              <tbody id="contrib-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CHAT PAGE ===== -->
+      <div class="page" id="page-chat">
+        <div class="chat-layout">
+          <div class="chat-sidebar">
+            <div class="chat-sidebar-section">
+              <div class="chat-sidebar-label">Channels</div>
+              <ul id="chat-channel-list">
+                <li class="channel-item active" onclick="switchChannel('general')">
+                  <span style="color:var(--text3)">#</span> general
+                </li>
+                <li class="channel-item" onclick="switchChannel('research')">
+                  <span style="color:var(--text3)">#</span> research
+                </li>
+                <li class="channel-item" onclick="switchChannel('coding')">
+                  <span style="color:var(--text3)">#</span> coding
+                </li>
+                <li class="channel-item" onclick="switchChannel('deadlines')">
+                  <span style="color:var(--text3)">#</span> deadlines
+                </li>
+              </ul>
+            </div>
+            <div class="chat-sidebar-section">
+              <div class="chat-sidebar-label">Direct Messages</div>
+              <ul id="dm-list"></ul>
+            </div>
+          </div>
+          <div class="chat-main">
+            <div class="chat-header">
+              <span id="chat-ch-icon" style="font-size:18px">#</span>
+              <span class="chat-title" id="chat-ch-name">general</span>
+              <span class="chat-desc" id="chat-ch-desc">General team discussion</span>
+              <div class="chat-members-row" id="chat-members-row"></div>
+            </div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-bar">
+              <textarea class="chat-input" id="chat-input" placeholder="Message #general..." rows="1" onkeydown="chatKeydown(event)"></textarea>
+              <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FILES PAGE ===== -->
+      <div class="page" id="page-files">
+        <div class="page-title">File Sharing</div>
+        <div class="page-sub">Upload, share, and manage project files.</div>
+        <div class="grid-2 mb-4" style="align-items:start">
+          <div>
+            <div class="file-upload-zone mb-3" id="upload-zone" onclick="triggerUpload()" ondragover="fileDragOver(event)" ondragleave="fileDragLeave(event)" ondrop="fileDrop(event)">
+              <div class="upload-icon">📤</div>
+              <div class="upload-text">Click or drag files to upload</div>
+              <div class="upload-sub">PDF, Word, PowerPoint, Images, Notes</div>
+            </div>
+            <input type="file" id="file-input" style="display:none" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.txt,.md" onchange="handleFileUpload(event)">
+            <div class="card">
+              <div class="card-header"><div class="card-title">📥 Recent Downloads</div></div>
+              <div class="file-list" id="recent-downloads"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex gap-2 mb-3">
+              <div class="search-bar" style="flex:1">
+                <span>🔍</span>
+                <input type="text" id="file-search" placeholder="Search files..." oninput="filterFiles()">
+              </div>
+            </div>
+            <div class="filter-tabs mb-3" id="file-filter-tabs">
+              <div class="filter-tab active" onclick="setFileFilter('all',this)">All</div>
+              <div class="filter-tab" onclick="setFileFilter('pdf',this)">PDF</div>
+              <div class="filter-tab" onclick="setFileFilter('doc',this)">Word</div>
+              <div class="filter-tab" onclick="setFileFilter('ppt',this)">Slides</div>
+              <div class="filter-tab" onclick="setFileFilter('image',this)">Images</div>
+              <div class="filter-tab" onclick="setFileFilter('note',this)">Notes</div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">📂 Shared Files</div></div>
+              <div class="file-list" id="file-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ADD TASK MODAL -->
+<div class="modal-overlay" id="addTaskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">＋ Add New Task</div>
+      <button class="modal-close" onclick="closeModal('addTaskModal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Task Title</label>
+      <input class="inp" id="new-task-title" placeholder="Enter task title...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Assign To</label>
+        <select class="inp inp-select" id="new-task-assignee"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="inp inp-select" id="new-task-priority">
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Required Skills</label>
+        <select class="inp inp-select" id="new-task-skill">
+          <option value="research">Research</option>
+          <option value="coding">Coding</option>
+          <option value="writing">Writing</option>
+          <option value="presentation">Presentation</option>
+          <option value="design">Design</option>
+          <option value="analysis">Analysis</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deadline</label>
+        <input class="inp" type="date" id="new-task-deadline">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-primary" style="flex:1" onclick="addTask()">Create Task</button>
+      <button class="btn btn-ghost" onclick="closeModal('addTaskModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MEMBER MODAL -->
+<div class="modal-overlay" id="addMemberModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Add Team Member</div>
+      <button class="modal-close" onclick="closeModal('addMemberModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input class="inp" id="new-member-name" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <input class="inp" id="new-member-role" placeholder="e.g. Developer">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Primary Skills (select all that apply)</label>
+      <div id="skill-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0">
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" value="research"> Research</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" value="coding"> Coding</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" value="writing"> Writing</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" value="presentation"> Presentation</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" value="design"> Design</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" value="analysis"> Analysis</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-primary" style="flex:1" onclick="addMember()">Add Member</button>
+      <button class="btn btn-ghost" onclick="closeModal('addMemberModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ===================================================
+// DATA STORE
+// ===================================================
+const COLORS = ['#4361ee','#f77f00','#2dc653','#e63946','#7b2d8b','#3a86ff','#ff006e','#fb5607'];
+
+let members = [
+  { id:1, name:'Omar Hassan', initials:'OH', role:'Team Lead', skills:['research','writing','analysis'], color:'#4361ee', messages:12, taskUpdates:8 },
+  { id:2, name:'Sara Kim',    initials:'SK', role:'Developer', skills:['coding','analysis','design'],    color:'#f77f00', messages:9,  taskUpdates:5 },
+  { id:3, name:'James Liu',   initials:'JL', role:'Researcher',skills:['research','writing'],             color:'#2dc653', messages:15, taskUpdates:6 },
+  { id:4, name:'Aisha Musa',  initials:'AM', role:'Designer',  skills:['design','presentation','writing'],color:'#e63946', messages:7,  taskUpdates:4 },
+  { id:5, name:'Tom Parker',  initials:'TP', role:'Analyst',   skills:['coding','analysis','research'],  color:'#7b2d8b', messages:5,  taskUpdates:3 },
+];
+
+let tasks = [
+  { id:1, title:'Literature Review',       skill:'research',     priority:'high',   status:'done',       assignee:3, deadline:'2024-11-20' },
+  { id:2, title:'System Architecture',     skill:'coding',       priority:'high',   status:'inprogress', assignee:2, deadline:'2024-12-05' },
+  { id:3, title:'Write Introduction',      skill:'writing',      priority:'medium', status:'done',       assignee:1, deadline:'2024-11-25' },
+  { id:4, title:'UI Mockups',              skill:'design',       priority:'medium', status:'inprogress', assignee:4, deadline:'2024-12-08' },
+  { id:5, title:'Data Analysis Script',    skill:'coding',       priority:'high',   status:'inprogress', assignee:5, deadline:'2024-12-10' },
+  { id:6, title:'Presentation Slides',     skill:'presentation', priority:'medium', status:'todo',       assignee:4, deadline:'2024-12-15' },
+  { id:7, title:'Methodology Section',     skill:'writing',      priority:'low',    status:'todo',       assignee:1, deadline:'2024-12-12' },
+  { id:8, title:'Final Report Summary',    skill:'writing',      priority:'low',    status:'done',       assignee:3, deadline:'2024-11-30' },
+];
+let nextTaskId = 9;
+
+const channelMessages = {
+  general: [
+    { id:1, author:3, text:'Hey team! Just finished the literature review. Ready for review 📚', time:'10:15 AM', readBy:[1,2,4,5] },
+    { id:2, author:2, text:'Great work James! I\'ll check it after finishing the architecture diagram.', time:'10:22 AM', readBy:[1,3,4] },
+    { id:3, author:1, text:'Good progress everyone. Remember our deadline is next Friday for the draft.', time:'10:45 AM', readBy:[2,3,4,5] },
+    { id:4, author:4, text:'Working on the UI mockups now, should have a draft by tomorrow 🎨', time:'11:02 AM', readBy:[1,2,3] },
+  ],
+  research: [
+    { id:1, author:3, text:'Found 3 really relevant papers on distributed systems. Sharing the links now.', time:'9:30 AM', readBy:[1,5] },
+    { id:2, author:5, text:'Perfect timing! I needed those for the analysis section.', time:'9:45 AM', readBy:[3] },
+  ],
+  coding: [
+    { id:1, author:2, text:'I\'ve set up the repo structure. Check the README for instructions.', time:'8:00 AM', readBy:[5] },
+    { id:2, author:5, text:'Got it! Starting on the data analysis script.', time:'8:30 AM', readBy:[2] },
+    { id:3, author:2, text:'Let me know if you need any help with the API calls.', time:'8:35 AM', readBy:[5] },
+  ],
+  deadlines: [
+    { id:1, author:1, text:'⚠️ Reminder: Draft due Friday Dec 15. Please wrap up your sections!', time:'Yesterday', readBy:[2,3,4,5] },
+  ],
+};
+let currentChannel = 'general';
+let currentDM = null;
+const channelDescs = { general:'General team discussion', research:'Research resources & notes', coding:'Code discussion & reviews', deadlines:'Important dates & reminders' };
+
+let files = [
+  { id:1, name:'Literature_Review_v2.pdf',   type:'pdf',   size:'2.4 MB', uploader:3, date:'Nov 20',  downloads:4 },
+  { id:2, name:'System_Architecture.docx',   type:'doc',   size:'1.1 MB', uploader:2, date:'Nov 28',  downloads:2 },
+  { id:3, name:'UI_Mockup_Draft.pptx',        type:'ppt',   size:'5.2 MB', uploader:4, date:'Dec 01',  downloads:3 },
+  { id:4, name:'Data_Analysis.py',            type:'note',  size:'48 KB',  uploader:5, date:'Dec 03',  downloads:1 },
+  { id:5, name:'Reference_Image_1.png',       type:'image', size:'890 KB', uploader:1, date:'Nov 15',  downloads:5 },
+  { id:6, name:'Project_Brief.pdf',           type:'pdf',   size:'320 KB', uploader:1, date:'Nov 10',  downloads:8 },
+  { id:7, name:'Meeting_Notes_Nov28.txt',     type:'note',  size:'12 KB',  uploader:3, date:'Nov 28',  downloads:2 },
+  { id:8, name:'Presentation_Template.pptx',  type:'ppt',   size:'3.8 MB', uploader:4, date:'Nov 22',  downloads:6 },
+  { id:9, name:'Logo_Final.png',              type:'image', size:'204 KB', uploader:4, date:'Nov 18',  downloads:3 },
+  { id:10, name:'API_Docs.docx',              type:'doc',   size:'780 KB', uploader:2, date:'Dec 02',  downloads:1 },
+  { id:11, name:'Research_Sources.txt',       type:'note',  size:'35 KB',  uploader:3, date:'Nov 25',  downloads:4 },
+  { id:12, name:'Gantt_Chart.pdf',            type:'pdf',   size:'1.8 MB', uploader:1, date:'Nov 12',  downloads:7 },
+];
+let fileFilter = 'all';
+let nextFileId = 13;
+
+const activities = [
+  { text: '<strong>James</strong> completed the Literature Review task', time: '10 min ago', color: '#2dc653' },
+  { text: '<strong>Sara</strong> moved "System Architecture" to In Progress', time: '32 min ago', color: '#f77f00' },
+  { text: '<strong>Aisha</strong> uploaded UI_Mockup_Draft.pptx', time: '1 hr ago', color: '#e63946' },
+  { text: '<strong>Tom</strong> sent 3 messages in #coding', time: '2 hrs ago', color: '#7b2d8b' },
+  { text: '<strong>Omar</strong> added the "Presentation Slides" task', time: '3 hrs ago', color: '#4361ee' },
+];
+
+// AI state
+let aiPendingAssignment = null;
+
+// Drag state
+let dragTaskId = null;
+
+// ===================================================
+// INIT
+// ===================================================
+window.onload = () => {
+  renderAll();
+  populateMemberDropdown();
+};
+
+function renderAll() {
+  renderTaskBoard();
+  renderDashboard();
+  renderContrib();
+  renderSkillMatrix();
+  renderChatDMList();
+  renderChatMessages();
+  renderFiles();
+  renderRecentDownloads();
+}
+
+// ===================================================
+// NAVIGATION
+// ===================================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const navMap = { dashboard:'Dashboard', tasks:'Task Board', ai:'AI Delegator', contrib:'Contributions', files:'Files', chat:'Chat' };
+  const subMap = { dashboard:'— Overview', tasks:'— Kanban View', ai:'— Smart Assignment', contrib:'— Tracker', files:'— Upload & Share', chat:'— Team Communication' };
+  document.getElementById('page-title').textContent = navMap[page];
+  document.getElementById('page-sub').textContent = subMap[page];
+  event.currentTarget && event.currentTarget.classList.add('active');
+  const navItems = document.querySelectorAll('.nav-item');
+  const pageOrder = ['dashboard','tasks','ai','contrib','files','chat'];
+  navItems.forEach((item,i) => { if(pageOrder[i] === page) item.classList.add('active'); });
+  if(page === 'chat') { setTimeout(() => scrollChatToBottom(), 50); }
+}
+
+// ===================================================
+// MODALS
+// ===================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if(id === 'addTaskModal') {
+    const today = new Date(); today.setDate(today.getDate() + 7);
+    document.getElementById('new-task-deadline').value = today.toISOString().split('T')[0];
+  }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target === o) o.classList.remove('open'); }));
+
+// ===================================================
+// TASK BOARD
+// ===================================================
+function getMember(id) { return members.find(m => m.id === id); }
+
+function renderTaskBoard() {
+  const statuses = ['todo','inprogress','done'];
+  statuses.forEach(s => {
+    const container = document.getElementById('tasks-' + s);
+    const filtered = tasks.filter(t => t.status === s);
+    document.getElementById('count-' + s).textContent = filtered.length;
+    container.innerHTML = filtered.map(t => taskCardHTML(t)).join('');
+  });
+  updateDashboardStats();
+}
+
+function taskCardHTML(t) {
+  const m = getMember(t.assignee);
+  const now = new Date(); const deadline = new Date(t.deadline);
+  const isOverdue = deadline < now && t.status !== 'done';
+  const ddStr = deadline.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  return `<div class="task-card" id="tc-${t.id}" draggable="true" ondragstart="onDragStart(event,${t.id})" ondragend="onDragEnd(event)">
+    <div class="task-card-top">
+      <div class="task-title">${t.title}</div>
+      <span class="priority-badge ${t.priority}">${t.priority}</span>
+    </div>
+    <div class="task-skill-tags"><span class="task-skill-tag">🔧 ${t.skill}</span></div>
+    <div class="task-meta">
+      <span class="task-deadline ${isOverdue?'overdue':''}">📅 ${ddStr}${isOverdue?' ⚠️':''}</span>
+      ${m ? `<div class="task-assignee"><div class="avatar sm" style="background:${m.color}" title="${m.name}">${m.initials}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+// Drag & Drop
+function onDragStart(e, taskId) {
+  dragTaskId = taskId;
+  setTimeout(() => document.getElementById('tc-'+taskId)?.classList.add('dragging'), 0);
+  document.querySelectorAll('.drop-zone').forEach(dz => dz.classList.add('active'));
+}
+function onDragEnd(e) {
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('dragging'));
+  document.querySelectorAll('.drop-zone').forEach(dz => dz.classList.remove('active'));
+  document.querySelectorAll('.board-col').forEach(c => c.classList.remove('drag-over'));
+}
+function onDragOver(e, col) {
+  e.preventDefault();
+  document.getElementById('col-'+col).classList.add('drag-over');
+}
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onDrop(e, newStatus) {
+  e.preventDefault();
+  document.querySelectorAll('.board-col').forEach(c => c.classList.remove('drag-over'));
+  if(dragTaskId === null) return;
+  const task = tasks.find(t => t.id === dragTaskId);
+  if(!task) return;
+  const oldStatus = task.status;
+  task.status = newStatus;
+  if(newStatus === 'done' && oldStatus !== 'done') {
+    const m = getMember(task.assignee);
+    addActivity(`<strong>${m?.name||'Someone'}</strong> completed "${task.title}"`, '#2dc653');
+  }
+  dragTaskId = null;
+  renderTaskBoard();
+  renderContrib();
+  renderDashboard();
+  showToast('Task moved to ' + (newStatus==='todo'?'To Do':newStatus==='inprogress'?'In Progress':'Completed'), 'success');
+}
+
+function updateDashboardStats() {
+  document.getElementById('stat-total-tasks').textContent = tasks.length;
+  document.getElementById('stat-completed').textContent = tasks.filter(t=>t.status==='done').length;
+  document.getElementById('stat-inprogress').textContent = tasks.filter(t=>t.status==='inprogress').length;
+  document.getElementById('task-badge').textContent = tasks.filter(t=>t.status!=='done').length;
+}
+
+function addTask() {
+  const title = document.getElementById('new-task-title').value.trim();
+  if(!title) { showToast('Please enter a task title','error'); return; }
+  const assigneeId = parseInt(document.getElementById('new-task-assignee').value);
+  const priority = document.getElementById('new-task-priority').value;
+  const skill = document.getElementById('new-task-skill').value;
+  const deadline = document.getElementById('new-task-deadline').value || '2024-12-31';
+  const task = { id: nextTaskId++, title, skill, priority, status:'todo', assignee: assigneeId, deadline };
+  tasks.push(task);
+  const m = getMember(assigneeId);
+  addActivity(`<strong>You</strong> created task "${title}" for ${m?.name||'Unassigned'}`, '#4361ee');
+  closeModal('addTaskModal');
+  document.getElementById('new-task-title').value = '';
+  renderAll();
+  showToast('Task created successfully!', 'success');
+}
+
+function populateMemberDropdown() {
+  const sel = document.getElementById('new-task-assignee');
+  sel.innerHTML = members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  const sel2 = document.getElementById('ai-task-skill');
+}
+
+// ===================================================
+// AI DELEGATOR
+// ===================================================
+function getMemberWorkload(memberId) {
+  return tasks.filter(t => t.assignee === memberId && t.status !== 'done').length;
+}
+function getWorkloadLevel(count) {
+  if(count <= 1) return 'low'; if(count <= 3) return 'medium'; return 'high';
+}
+
+function scoreAssignment(member, skill, workload) {
+  let score = 0;
+  // Skill match (0-50 pts)
+  if(member.skills.includes(skill)) score += 50;
+  else score += 5; // partial credit if no match
+  // Workload penalty
+  const wl = getMemberWorkload(member.id);
+  if(wl === 0) score += 30;
+  else if(wl === 1) score += 20;
+  else if(wl === 2) score += 10;
+  else if(wl === 3) score += 0;
+  else score -= 10 * (wl - 3);
+  // Balance bonus: prefer members with fewer completed tasks (fairness)
+  const done = tasks.filter(t => t.assignee === member.id && t.status === 'done').length;
+  if(done < 2) score += 10;
+  return Math.max(0, Math.min(100, score));
+}
+
+function runAIDelegator() {
+  const title = document.getElementById('ai-task-title').value.trim();
+  const skill = document.getElementById('ai-task-skill').value;
+  const priority = document.getElementById('ai-task-priority').value;
+  if(!title) { showToast('Please enter a task title','error'); return; }
+
+  const scores = members.map(m => ({
+    member: m,
+    score: scoreAssignment(m, skill, getMemberWorkload(m.id)),
+    workload: getMemberWorkload(m.id),
+    hasSkill: m.skills.includes(skill),
+  })).sort((a,b) => b.score - a.score);
+
+  const best = scores[0];
+  aiPendingAssignment = { title, skill, priority, assigneeId: best.member.id };
+
+  const reasons = [];
+  if(best.hasSkill) reasons.push(`has "${skill}" as a listed skill`);
+  else reasons.push(`no direct skill match, chosen by availability`);
+  if(best.workload === 0) reasons.push('currently has no active tasks');
+  else if(best.workload === 1) reasons.push(`has only ${best.workload} active task`);
+  else reasons.push(`has ${best.workload} active tasks (lowest available)`);
+
+  const allRows = scores.map(s => `
+    <div class="assign-score" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="avatar sm" style="background:${s.member.color}">${s.member.initials}</div>
+      <span style="font-weight:600;font-size:13px;min-width:110px">${s.member.name}</span>
+      <div class="score-bar"><div class="score-fill" style="width:${s.score}%;background:${s.score>70?'var(--green)':s.score>40?'var(--orange)':'var(--red)'}"></div></div>
+      <span style="font-size:12px;font-weight:700;color:var(--text)">${s.score}%</span>
+      <span class="workload-badge ${getWorkloadLevel(s.workload)}">${s.workload} tasks</span>
+      ${s.hasSkill?`<span style="font-size:10px;color:var(--green);font-weight:600">✓ skill match</span>`:''}
+    </div>
+  `).join('');
+
+  document.getElementById('ai-recommend-content').innerHTML = `
+    <div style="background:var(--green-light);border-radius:8px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
+      <div class="avatar" style="background:${best.member.color}">${best.member.initials}</div>
+      <div>
+        <div style="font-weight:700;font-size:14px">${best.member.name}</div>
+        <div style="font-size:12px;color:var(--text2)">${best.member.role} · Score: ${best.score}/100</div>
+      </div>
+      <div style="margin-left:auto;font-size:22px">🏆</div>
+    </div>
+    <div class="reason-text" style="margin-bottom:12px">"${best.member.name} ${reasons.join(' and ')}."</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin-bottom:8px">All Member Scores</div>
+    ${allRows}
+  `;
+  document.getElementById('ai-recommend').classList.add('show');
+}
+
+function acceptAIAssignment() {
+  if(!aiPendingAssignment) return;
+  const today = new Date(); today.setDate(today.getDate() + 14);
+  const task = { id: nextTaskId++, ...aiPendingAssignment, status: 'todo', deadline: today.toISOString().split('T')[0] };
+  tasks.push(task);
+  const m = getMember(task.assigneeId);
+  addActivity(`<strong>AI Delegator</strong> assigned "${task.title}" to ${m?.name}`, '#4361ee');
+  document.getElementById('ai-recommend').classList.remove('show');
+  document.getElementById('ai-task-title').value = '';
+  aiPendingAssignment = null;
+  renderAll();
+  showToast(`Task assigned to ${m?.name}!`, 'success');
+}
+
+function renderSkillMatrix() {
+  const tbody = document.getElementById('skill-matrix-body');
+  tbody.innerHTML = members.map(m => {
+    const wl = getMemberWorkload(m.id);
+    const lvl = getWorkloadLevel(wl);
+    const avail = lvl==='low'?'Available':lvl==='medium'?'Moderate':'Busy';
+    const availColor = lvl==='low'?'var(--green)':lvl==='medium'?'var(--orange)':'var(--red)';
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar sm" style="background:${m.color}">${m.initials}</div>${m.name}</div></td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">${m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join('')}</div></td>
+      <td><strong>${wl}</strong></td>
+      <td><span class="workload-badge ${lvl}">${lvl}</span></td>
+      <td><span style="color:${availColor};font-weight:600;font-size:12px">● ${avail}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================================================
+// CONTRIBUTIONS
+// ===================================================
+function calcContrib(member) {
+  const done = tasks.filter(t => t.assignee === member.id && t.status === 'done').length;
+  const active = tasks.filter(t => t.assignee === member.id && t.status !== 'done').length;
+  return { done, active, messages: member.messages, updates: member.taskUpdates };
+}
+
+function calcPercentages() {
+  const totals = members.map(m => {
+    const c = calcContrib(m);
+    return c.done * 3 + c.active * 1 + c.messages * 0.5 + c.updates * 0.5;
+  });
+  const sum = totals.reduce((a,b) => a+b, 0) || 1;
+  return totals.map(t => Math.round((t / sum) * 100));
+}
+
+function renderContrib() {
+  const percs = calcPercentages();
+  // Cards
+  const container = document.getElementById('contrib-cards');
+  container.innerHTML = members.map((m,i) => {
+    const c = calcContrib(m);
+    const pct = percs[i];
+    const wl = getMemberWorkload(m.id);
+    return `<div class="member-card">
+      <div class="member-header">
+        <div class="avatar lg" style="background:${m.color}">${m.initials}</div>
+        <div>
+          <div class="member-name">${m.name}</div>
+          <div class="member-role">${m.role}</div>
+          <span class="workload-badge ${getWorkloadLevel(wl)}" style="margin-top:4px">${wl} active tasks</span>
+        </div>
+      </div>
+      <div class="skill-tags">${m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join('')}</div>
+      <div class="member-stats-row">
+        <div class="member-stat"><div class="member-stat-val">${c.done}</div><div class="member-stat-lbl">Done</div></div>
+        <div class="member-stat"><div class="member-stat-val">${c.active}</div><div class="member-stat-lbl">Active</div></div>
+        <div class="member-stat"><div class="member-stat-val">${c.messages}</div><div class="member-stat-lbl">Msgs</div></div>
+        <div class="member-stat"><div class="member-stat-val">${c.updates}</div><div class="member-stat-lbl">Updates</div></div>
+      </div>
+      <div class="contrib-bar-wrap">
+        <div class="contrib-bar-label"><span>Contribution</span><span>${pct}%</span></div>
+        <div class="contrib-bar"><div class="contrib-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Table
+  const tbody = document.getElementById('contrib-table-body');
+  const percs2 = calcPercentages();
+  tbody.innerHTML = members.map((m,i) => {
+    const c = calcContrib(m);
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar sm" style="background:${m.color}">${m.initials}</div><strong>${m.name}</strong></div></td>
+      <td><strong style="color:var(--green)">${c.done}</strong></td>
+      <td>${c.active}</td>
+      <td>${c.messages}</td>
+      <td>${c.updates}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="contrib-bar" style="width:80px"><div class="contrib-bar-fill" style="width:${percs2[i]}%"></div></div>
+          <strong>${percs2[i]}%</strong>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================================================
+// DASHBOARD
+// ===================================================
+function renderDashboard() {
+  updateDashboardStats();
+  // Quick task list
+  const activeTasks = tasks.filter(t=>t.status!=='done').slice(0,5);
+  document.getElementById('dashboard-tasks').innerHTML = activeTasks.map(t => {
+    const m = getMember(t.assignee);
+    return `<div class="quick-task">
+      <span class="priority-badge ${t.priority}" style="flex-shrink:0">${t.priority}</span>
+      <span class="quick-task-name">${t.title}</span>
+      ${m?`<div class="avatar sm" style="background:${m.color}" title="${m.name}">${m.initials}</div>`:''}
+    </div>`;
+  }).join('') || '<div style="color:var(--text3);font-size:13px;padding:8px 0">All tasks completed! 🎉</div>';
+
+  // Activity
+  document.getElementById('activity-list').innerHTML = activities.slice(0,5).map(a=>`
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${a.color}"></div>
+      <div>
+        <div class="activity-text">${a.text}</div>
+        <div class="activity-time">${a.time}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Contribution bar
+  const percs = calcPercentages();
+  document.getElementById('dash-contrib-bar').innerHTML = members.map((m,i)=>
+    `<div class="contrib-seg" style="flex:${percs[i]};background:${m.color}" title="${m.name}: ${percs[i]}%"></div>`
+  ).join('');
+  document.getElementById('dash-contrib-legend').innerHTML = members.map((m,i)=>
+    `<div class="contrib-legend-item"><div class="legend-dot" style="background:${m.color}"></div>${m.name} <strong>${percs[i]}%</strong></div>`
+  ).join('');
+}
+
+function addActivity(text, color) {
+  activities.unshift({ text, time: 'Just now', color });
+  if(activities.length > 20) activities.pop();
+  renderDashboard();
+}
+
+// ===================================================
+// CHAT
+// ===================================================
+function renderChatDMList() {
+  const ul = document.getElementById('dm-list');
+  ul.innerHTML = members.filter(m=>m.id!==1).map(m=>`
+    <li class="dm-item ${currentDM===m.id?'active':''}" onclick="switchDM(${m.id})">
+      <div class="avatar sm" style="background:${m.color};position:relative">${m.initials}</div>
+      <div class="dm-online" style="${m.id%2===0?'':'background:var(--orange)'}"></div>
+      ${m.name.split(' ')[0]}
+    </li>
+  `).join('');
+}
+
+function switchChannel(ch) {
+  currentChannel = ch;
+  currentDM = null;
+  document.querySelectorAll('.channel-item').forEach(el => {
+    el.classList.remove('active');
+    if(el.textContent.trim().includes(ch)) el.classList.add('active');
+  });
+  document.getElementById('chat-ch-icon').textContent = '#';
+  document.getElementById('chat-ch-name').textContent = ch;
+  document.getElementById('chat-ch-desc').textContent = channelDescs[ch] || '';
+  const inp = document.getElementById('chat-input');
+  if(inp) inp.placeholder = `Message #${ch}...`;
+  document.querySelectorAll('.dm-item').forEach(el=>el.classList.remove('active'));
+  renderChatMessages();
+  setTimeout(scrollChatToBottom, 50);
+  // Clear badge
+  document.getElementById('msg-badge').textContent = '';
+}
+
+function switchDM(memberId) {
+  currentDM = memberId;
+  currentChannel = null;
+  const m = getMember(memberId);
+  document.getElementById('chat-ch-icon').textContent = '👤';
+  document.getElementById('chat-ch-name').textContent = m.name;
+  document.getElementById('chat-ch-desc').textContent = m.role;
+  document.getElementById('chat-input').placeholder = `Message ${m.name}...`;
+  document.querySelectorAll('.channel-item').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.dm-item').forEach(el=>{
+    el.classList.remove('active');
+    if(el.onclick.toString().includes(memberId)) el.classList.add('active');
+  });
+  renderChatMessages();
+  setTimeout(scrollChatToBottom, 50);
+}
+
+function renderChatMessages() {
+  const container = document.getElementById('chat-messages');
+  const msgs = currentChannel ? (channelMessages[currentChannel] || []) : getDMMessages(currentDM);
+  if(!msgs || msgs.length === 0) {
+    container.innerHTML = `<div style="text-align:center;color:var(--text3);padding:40px;font-size:13px">No messages yet. Start the conversation! 👋</div>`;
+    return;
+  }
+  container.innerHTML = msgs.map(msg => {
+    const isOwn = msg.author === 1;
+    const m = getMember(msg.author);
+    const readByNames = msg.readBy ? msg.readBy.map(id => getMember(id)?.name?.split(' ')[0]).filter(Boolean).join(', ') : '';
+    return `<div class="msg-row ${isOwn?'own':''}">
+      ${!isOwn ? `<div class="avatar sm" style="background:${m?.color||'#999'}">${m?.initials||'??'}</div>` : ''}
+      <div class="msg-body">
+        <div class="msg-top">
+          <span class="msg-name" style="color:${m?.color||'var(--text)'}">${m?.name||'Unknown'}</span>
+          <span class="msg-time">${msg.time}</span>
+        </div>
+        <div class="msg-text ${isOwn?'own':''}">${msg.text}</div>
+        ${readByNames && !isOwn ? `<div class="read-by">Read by ${readByNames}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  // Render member avatars in header
+  const memberRow = document.getElementById('chat-members-row');
+  memberRow.innerHTML = members.slice(0,4).map(m=>`<div class="avatar sm" style="background:${m.color};margin-left:-6px;border:2px solid var(--surface)" title="${m.name}">${m.initials}</div>`).join('');
+}
+
+let dmMessages = {};
+function getDMMessages(memberId) {
+  if(!memberId) return [];
+  return dmMessages[memberId] || [];
+}
+
+function sendMessage() {
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if(!text) return;
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+  const msg = { id: Date.now(), author: 1, text, time: timeStr, readBy: [] };
+  if(currentChannel) {
+    if(!channelMessages[currentChannel]) channelMessages[currentChannel] = [];
+    channelMessages[currentChannel].push(msg);
+    // Increment message count for current user (Omar, id=1)
+    members[0].messages++;
+    members[0].taskUpdates++;
+  } else if(currentDM) {
+    if(!dmMessages[currentDM]) dmMessages[currentDM] = [];
+    dmMessages[currentDM].push(msg);
+    members[0].messages++;
+    // Simulate reply
+    setTimeout(() => {
+      const m = getMember(currentDM);
+      const replies = ['Got it, thanks!', 'Sure, I\'ll get on it.', 'Noted! 👍', 'On it!', 'Thanks for the update!'];
+      const replyMsg = { id:Date.now()+1, author:currentDM, text:replies[Math.floor(Math.random()*replies.length)], time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}), readBy:[1] };
+      dmMessages[currentDM].push(replyMsg);
+      renderChatMessages();
+      scrollChatToBottom();
+    }, 1200);
+  }
+  inp.value = '';
+  inp.style.height = 'auto';
+  renderChatMessages();
+  renderContrib();
+  scrollChatToBottom();
+}
+
+function chatKeydown(e) {
+  if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function scrollChatToBottom() {
+  const c = document.getElementById('chat-messages');
+  if(c) c.scrollTop = c.scrollHeight;
+}
+
+// ===================================================
+// FILES
+// ===================================================
+const FILE_ICONS = { pdf:'📄', doc:'📝', ppt:'📊', image:'🖼️', note:'📋' };
+const FILE_COLORS = { pdf:'#e63946', doc:'#4361ee', ppt:'#f77f00', image:'#2dc653', note:'#7b2d8b' };
+
+function renderFiles() {
+  const query = (document.getElementById('file-search')?.value||'').toLowerCase();
+  const filtered = files.filter(f => {
+    const matchFilter = fileFilter==='all' || f.type===fileFilter;
+    const matchSearch = !query || f.name.toLowerCase().includes(query);
+    return matchFilter && matchSearch;
+  });
+  const container = document.getElementById('file-list');
+  if(filtered.length === 0) {
+    container.innerHTML = `<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">No files found.</div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(f => {
+    const m = getMember(f.uploader);
+    return `<div class="file-item">
+      <div class="file-icon" style="color:${FILE_COLORS[f.type]||'#999'}">${FILE_ICONS[f.type]||'📎'}</div>
+      <div>
+        <div class="file-name">${f.name}</div>
+        <div class="file-meta">${f.size} · Shared by ${m?.name?.split(' ')[0]||'Unknown'} · ${f.date} · ${f.downloads} downloads</div>
+      </div>
+      <div class="file-actions">
+        <button class="btn btn-ghost btn-sm" onclick="downloadFile(${f.id})">⬇ Download</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderRecentDownloads() {
+  const recent = [...files].sort((a,b)=>b.downloads-a.downloads).slice(0,4);
+  document.getElementById('recent-downloads').innerHTML = recent.map(f => `
+    <div class="file-item">
+      <div class="file-icon" style="color:${FILE_COLORS[f.type]||'#999'}">${FILE_ICONS[f.type]||'📎'}</div>
+      <div>
+        <div class="file-name">${f.name}</div>
+        <div class="file-meta">${f.size} · ${f.downloads} downloads</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="downloadFile(${f.id})">⬇</button>
+    </div>
+  `).join('');
+}
+
+function setFileFilter(type, el) {
+  fileFilter = type;
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderFiles();
+}
+function filterFiles() { renderFiles(); }
+
+function downloadFile(fileId) {
+  const f = files.find(fi=>fi.id===fileId);
+  if(!f) return;
+  f.downloads++;
+  showToast(`"${f.name}" downloaded!`, 'info');
+  renderFiles();
+  renderRecentDownloads();
+}
+
+function triggerUpload() { document.getElementById('file-input').click(); }
+function fileDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+function fileDragLeave(e) { document.getElementById('upload-zone').classList.remove('dragover'); }
+function fileDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('dragover');
+  handleFileUpload({ target: { files: e.dataTransfer.files } });
+}
+
+function handleFileUpload(e) {
+  const uploadedFiles = Array.from(e.target.files||[]);
+  if(uploadedFiles.length === 0) return;
+  uploadedFiles.forEach(file => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    let type = 'note';
+    if(ext==='pdf') type='pdf';
+    else if(['doc','docx'].includes(ext)) type='doc';
+    else if(['ppt','pptx'].includes(ext)) type='ppt';
+    else if(['png','jpg','jpeg','gif','webp'].includes(ext)) type='image';
+    const size = file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+' MB' : (file.size/1024).toFixed(0)+' KB';
+    const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    files.unshift({ id:nextFileId++, name:file.name, type, size, uploader:1, date:today, downloads:0 });
+    addActivity(`<strong>You</strong> uploaded "${file.name}"`, '#2dc653');
+  });
+  renderFiles();
+  renderRecentDownloads();
+  showToast(`${uploadedFiles.length} file(s) uploaded!`, 'success');
+}
+
+function addMember() {
+  const name = document.getElementById('new-member-name').value.trim();
+  const role = document.getElementById('new-member-role').value.trim();
+  const skills = Array.from(document.querySelectorAll('#skill-checkboxes input:checked')).map(cb=>cb.value);
+  if(!name || !role) { showToast('Please fill in all fields','error'); return; }
+  if(skills.length===0) { showToast('Please select at least one skill','error'); return; }
+  const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  const color = COLORS[members.length % COLORS.length];
+  const member = { id: members.length+1, name, initials, role, skills, color, messages:0, taskUpdates:0 };
+  members.push(member);
+  closeModal('addMemberModal');
+  document.getElementById('new-member-name').value='';
+  document.getElementById('new-member-role').value='';
+  document.querySelectorAll('#skill-checkboxes input').forEach(cb=>cb.checked=false);
+  populateMemberDropdown();
+  renderAll();
+  showToast(`${name} added to the team!`, 'success');
+}
+
+// ===================================================
+// TOAST
+// ===================================================
+function showToast(msg, type='info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = { success:'✅', error:'❌', info:'ℹ️' };
+  toast.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.animation='fadeOut 0.3s ease forwards'; setTimeout(()=>toast.remove(),300); }, 3000);
+}
+
+// Init selects etc.
+setTimeout(populateMemberDropdown, 0);
+</script>
+</body>
+</html>
