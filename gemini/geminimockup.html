@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UniSync | Group Collaboration Hub</title>
+    <style>
+      :root {
+        --bg-body: #f4f7f6;
+        --bg-sidebar: #ffffff;
+        --primary: #2a9d8f;
+        --secondary: #264653;
+        --accent: #e9c46a;
+        --text-main: #2d3436;
+        --text-muted: #636e72;
+        --border: #dfe6e9;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Sidebar Navigation */
+      nav {
+        width: 260px;
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--primary);
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .nav-item {
+        padding: 12px 15px;
+        margin-bottom: 5px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.3s;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .nav-item:hover,
+      .nav-item.active {
+        background: #f0fdfa;
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      /* Main Content Area */
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        position: relative;
+      }
+
+      header {
+        padding: 20px 40px;
+        background: #fff;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .content-section {
+        display: none;
+        padding: 30px 40px;
+        animation: fadeIn 0.4s ease;
+      }
+      .content-section.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Dashboard / Tracker Styles */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+      .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+      .stat-card h3 {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+      }
+      .stat-card .value {
+        font-size: 28px;
+        font-weight: bold;
+        color: var(--secondary);
+      }
+
+      .member-list {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .member-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border);
+        align-items: center;
+      }
+      .member-header {
+        background: #f8f9fa;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+
+      /* Task Board Styles */
+      .board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        align-items: start;
+      }
+      .column {
+        background: #ebedef;
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 500px;
+      }
+      .column h2 {
+        font-size: 16px;
+        margin-bottom: 15px;
+        color: var(--secondary);
+        display: flex;
+        justify-content: space-between;
+      }
+      .task-card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        cursor: grab;
+        border-left: 4px solid var(--primary);
+      }
+      .task-card:active {
+        cursor: grabbing;
+        opacity: 0.6;
+      }
+      .task-card h4 {
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+      .task-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+      }
+      .badge {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+      .badge-high {
+        background: #ffeaa7;
+        color: #d35400;
+      }
+
+      /* AI Delegator UI */
+      .ai-panel {
+        background: #264653;
+        color: white;
+        padding: 25px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+      }
+      .ai-panel h2 {
+        margin-bottom: 15px;
+        color: #e9c46a;
+      }
+      .ai-form {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+      select,
+      input {
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        outline: none;
+      }
+      button {
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
+        background: var(--primary);
+        color: white;
+      }
+      button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      /* Chat Styles */
+      .chat-container {
+        display: flex;
+        height: calc(100vh - 160px);
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+      .chat-sidebar {
+        width: 240px;
+        border-right: 1px solid var(--border);
+        background: #f8f9fa;
+      }
+      .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .message {
+        max-width: 70%;
+        padding: 12px;
+        border-radius: 12px;
+        position: relative;
+      }
+      .msg-sent {
+        align-self: flex-end;
+        background: var(--primary);
+        color: white;
+        border-bottom-right-radius: 2px;
+      }
+      .msg-received {
+        align-self: flex-start;
+        background: #f1f2f6;
+        color: var(--text-main);
+        border-bottom-left-radius: 2px;
+      }
+      .msg-info {
+        font-size: 10px;
+        margin-bottom: 4px;
+        opacity: 0.8;
+      }
+      .read-receipt {
+        font-size: 10px;
+        text-align: right;
+        margin-top: 2px;
+        opacity: 0.6;
+      }
+      .chat-input {
+        padding: 20px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+      }
+      .chat-input input {
+        flex: 1;
+      }
+
+      /* File Manager */
+      .file-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 20px;
+      }
+      .file-card {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        text-align: center;
+      }
+      .file-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+      }
+      .file-name {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 5px;
+        word-break: break-all;
+      }
+      .file-meta {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      .search-bar {
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 400px;
+      }
+
+      /* Utilities */
+      .progress-bar {
+        height: 8px;
+        background: #eee;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 5px;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--primary);
+        transition: width 0.5s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="logo">
+        <span>Sync</span
+        ><small style="font-size: 12px; opacity: 0.7">GroupWork</small>
+      </div>
+      <div class="nav-item active" onclick="showSection('dashboard')">
+        📊 Dashboard
+      </div>
+      <div class="nav-item" onclick="showSection('tasks')">📋 Task Board</div>
+      <div class="nav-item" onclick="showSection('chat')">💬 Team Chat</div>
+      <div class="nav-item" onclick="showSection('files')">📂 File Share</div>
+    </nav>
+
+    <main>
+      <header>
+        <h2 id="section-title">Project Dashboard</h2>
+        <div
+          id="current-user-display"
+          style="font-size: 14px; color: var(--text-muted)"
+        >
+          Logged in as: <strong>Alex (Lead)</strong>
+        </div>
+      </header>
+
+      <section id="dashboard" class="content-section active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Total Progress</h3>
+            <div class="value" id="total-progress">0%</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="total-progress-bar"></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <h3>Tasks Completed</h3>
+            <div class="value" id="total-completed">0/0</div>
+          </div>
+          <div class="stat-card">
+            <h3>Team Velocity</h3>
+            <div class="value">High</div>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 15px">Team Contribution Tracker</h3>
+        <div class="member-list" id="contribution-table">
+          <div class="member-row member-header">
+            <div>Member</div>
+            <div>Skills</div>
+            <div>Active Tasks</div>
+            <div>Completed</div>
+            <div>Contribution %</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tasks" class="content-section">
+        <div class="ai-panel">
+          <h2>✨ Smart Task Delegator</h2>
+          <div class="ai-form">
+            <input
+              type="text"
+              id="task-name"
+              placeholder="Task Name (e.g., Design UI)"
+            />
+            <select id="task-skill">
+              <option value="coding">Coding</option>
+              <option value="research">Research</option>
+              <option value="writing">Writing</option>
+              <option value="presentation">Presentation</option>
+            </select>
+            <select id="task-priority">
+              <option value="Low">Low Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="High">High Priority</option>
+            </select>
+            <button onclick="delegateTask()">Assign Automatically</button>
+          </div>
+          <p style="font-size: 12px; margin-top: 10px; opacity: 0.8">
+            AI analyzes member skills and current workload to find the best fit.
+          </p>
+        </div>
+
+        <div class="board">
+          <div
+            class="column"
+            id="todo"
+            ondrop="drop(event)"
+            ondragover="allowDrop(event)"
+          >
+            <h2>To Do <span id="count-todo" class="badge">0</span></h2>
+            <div class="task-list" id="list-todo"></div>
+          </div>
+          <div
+            class="column"
+            id="inprogress"
+            ondrop="drop(event)"
+            ondragover="allowDrop(event)"
+          >
+            <h2>
+              In Progress <span id="count-inprogress" class="badge">0</span>
+            </h2>
+            <div class="task-list" id="list-inprogress"></div>
+          </div>
+          <div
+            class="column"
+            id="completed"
+            ondrop="drop(event)"
+            ondragover="allowDrop(event)"
+          >
+            <h2>Completed <span id="count-completed" class="badge">0</span></h2>
+            <div class="task-list" id="list-completed"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="chat" class="content-section">
+        <div class="chat-container">
+          <div class="chat-sidebar">
+            <div
+              style="
+                padding: 15px;
+                font-weight: bold;
+                border-bottom: 1px solid var(--border);
+              "
+            >
+              Channels
+            </div>
+            <div class="nav-item active"># general</div>
+            <div class="nav-item"># research-sync</div>
+            <div class="nav-item"># design-feedback</div>
+            <div
+              style="
+                padding: 15px;
+                font-weight: bold;
+                border-bottom: 1px solid var(--border);
+                margin-top: 10px;
+              "
+            >
+              Direct Messages
+            </div>
+            <div class="nav-item">Jordan</div>
+            <div class="nav-item">Sam</div>
+          </div>
+          <div class="chat-main">
+            <div class="chat-messages" id="chat-box"></div>
+            <div class="chat-input">
+              <input
+                type="text"
+                id="chat-input-field"
+                placeholder="Type a message to the group..."
+              />
+              <button onclick="sendMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="files" class="content-section">
+        <input
+          type="text"
+          class="search-bar"
+          placeholder="🔍 Search files..."
+          onkeyup="filterFiles(this.value)"
+        />
+        <div style="margin-bottom: 20px">
+          <button
+            style="background: var(--secondary)"
+            onclick="document.getElementById('file-upload').click()"
+          >
+            + Upload New File
+          </button>
+          <input
+            type="file"
+            id="file-upload"
+            style="display: none"
+            onchange="handleFileUpload(event)"
+          />
+        </div>
+        <h3 style="margin-bottom: 15px">Recent Documents</h3>
+        <div class="file-grid" id="file-display"></div>
+      </section>
+    </main>
+
+    <script>
+      // --- 1. STATE MANAGEMENT ---
+      const state = {
+        users: [
+          {
+            id: 1,
+            name: "Alex",
+            skills: ["coding", "research"],
+            tasksActive: 0,
+            tasksDone: 2,
+            messages: 15,
+            lastViewed: Date.now(),
+          },
+          {
+            id: 2,
+            name: "Jordan",
+            skills: ["writing", "presentation"],
+            tasksActive: 1,
+            tasksDone: 1,
+            messages: 8,
+            lastViewed: Date.now() - 5000,
+          },
+          {
+            id: 3,
+            name: "Sam",
+            skills: ["research", "writing"],
+            tasksActive: 0,
+            tasksDone: 3,
+            messages: 22,
+            lastViewed: Date.now() - 100000,
+          },
+        ],
+        tasks: [
+          {
+            id: 101,
+            title: "Literature Review",
+            skillReq: "research",
+            priority: "High",
+            status: "completed",
+            assignedTo: 3,
+          },
+          {
+            id: 102,
+            title: "API Integration",
+            skillReq: "coding",
+            priority: "Medium",
+            status: "inprogress",
+            assignedTo: 1,
+          },
+          {
+            id: 103,
+            title: "Drafting Report",
+            skillReq: "writing",
+            priority: "Low",
+            status: "todo",
+            assignedTo: 2,
+          },
+        ],
+        messages: [
+          {
+            user: "Sam",
+            text: "I've uploaded the research notes for the first chapter.",
+            time: "10:15 AM",
+          },
+          {
+            user: "Alex",
+            text: "Great, I'll start looking at the code structure today.",
+            time: "10:20 AM",
+          },
+        ],
+        files: [
+          {
+            name: "Project_Proposal.pdf",
+            type: "PDF",
+            size: "1.2 MB",
+            date: "2026-03-05",
+          },
+          {
+            name: "Wireframes_V1.png",
+            type: "Image",
+            size: "3.4 MB",
+            date: "2026-03-07",
+          },
+        ],
+        currentUser: "Alex",
+      };
+
+      // --- 2. NAVIGATION LOGIC ---
+      function showSection(id) {
+        document
+          .querySelectorAll(".content-section")
+          .forEach((s) => s.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+
+        // Set nav item as active
+        event.currentTarget.classList.add("active");
+
+        // Update Header
+        const titles = {
+          dashboard: "Project Dashboard",
+          tasks: "Task Board",
+          chat: "Team Chat",
+          files: "File Storage",
+        };
+        document.getElementById("section-title").innerText = titles[id];
+
+        if (id === "dashboard") renderDashboard();
+        if (id === "tasks") renderTasks();
+        if (id === "chat") renderChat();
+        if (id === "files") renderFiles();
+      }
+
+      // --- 3. AI DELEGATOR LOGIC ---
+      function delegateTask() {
+        const name = document.getElementById("task-name").value;
+        const skill = document.getElementById("task-skill").value;
+        const priority = document.getElementById("task-priority").value;
+
+        if (!name) return alert("Please enter a task name");
+
+        // Logic: Score members based on Skill match (2pts) minus Workload (1pt per active task)
+        let bestMember = null;
+        let highestScore = -Infinity;
+
+        state.users.forEach((user) => {
+          let score = 0;
+          if (user.skills.includes(skill)) score += 5; // Strong skill preference
+          score -= user.tasksActive * 2; // Heavy penalty for workload
+
+          if (score > highestScore) {
+            highestScore = score;
+            bestMember = user;
+          }
+        });
+
+        // Create Task
+        const newTask = {
+          id: Date.now(),
+          title: name,
+          skillReq: skill,
+          priority: priority,
+          status: "todo",
+          assignedTo: bestMember.id,
+        };
+
+        state.tasks.push(newTask);
+        bestMember.tasksActive++;
+
+        // UI Update
+        document.getElementById("task-name").value = "";
+        renderTasks();
+        alert(
+          `AI assigned "${name}" to ${bestMember.name} based on ${skill} skills.`
+        );
+      }
+
+      // --- 4. DRAG AND DROP ---
+      function allowDrop(ev) {
+        ev.preventDefault();
+      }
+
+      function drag(ev, taskId) {
+        ev.dataTransfer.setData("taskId", taskId);
+      }
+
+      function drop(ev) {
+        ev.preventDefault();
+        const taskId = ev.dataTransfer.getData("taskId");
+        const newStatus = ev.currentTarget.id; // todo, inprogress, completed
+
+        const task = state.tasks.find((t) => t.id == taskId);
+        const user = state.users.find((u) => u.id == task.assignedTo);
+
+        // Update user stats if status changed to/from completed
+        if (task.status !== "completed" && newStatus === "completed") {
+          user.tasksDone++;
+          user.tasksActive--;
+        } else if (task.status === "completed" && newStatus !== "completed") {
+          user.tasksDone--;
+          user.tasksActive++;
+        }
+
+        task.status = newStatus;
+        renderTasks();
+      }
+
+      // --- 5. RENDER FUNCTIONS ---
+      function renderTasks() {
+        const columns = { todo: "", inprogress: "", completed: "" };
+        const counts = { todo: 0, inprogress: 0, completed: 0 };
+
+        state.tasks.forEach((task) => {
+          const user = state.users.find((u) => u.id === task.assignedTo);
+          const html = `
+                    <div class="task-card" draggable="true" ondragstart="drag(event, ${
+                      task.id
+                    })">
+                        <h4>${task.title}</h4>
+                        <div class="task-meta">
+                            <span>👤 ${user.name}</span>
+                            <span class="badge ${
+                              task.priority === "High" ? "badge-high" : ""
+                            }">${task.priority}</span>
+                        </div>
+                        <div style="font-size: 10px; margin-top: 5px; color: var(--primary)">#${
+                          task.skillReq
+                        }</div>
+                    </div>
+                `;
+          columns[task.status] += html;
+          counts[task.status]++;
+        });
+
+        for (let status in columns) {
+          document.getElementById(`list-${status}`).innerHTML = columns[status];
+          document.getElementById(`count-${status}`).innerText = counts[status];
+        }
+      }
+
+      function renderDashboard() {
+        const total = state.tasks.length;
+        const completed = state.tasks.filter(
+          (t) => t.status === "completed"
+        ).length;
+        const progress =
+          total === 0 ? 0 : Math.round((completed / total) * 100);
+
+        document.getElementById("total-progress").innerText = progress + "%";
+        document.getElementById("total-progress-bar").style.width =
+          progress + "%";
+        document.getElementById(
+          "total-completed"
+        ).innerText = `${completed}/${total}`;
+
+        // Calculate Team Contribution
+        const table = document.getElementById("contribution-table");
+        // Keep header
+        table.innerHTML = `
+                <div class="member-row member-header">
+                    <div>Member</div><div>Skills</div><div>Active</div><div>Done</div><div>Contribution</div>
+                </div>
+            `;
+
+        const totalActivity = state.users.reduce(
+          (acc, u) => acc + u.tasksDone * 2 + u.messages,
+          0
+        );
+
+        state.users.forEach((user) => {
+          const weight = user.tasksDone * 2 + user.messages;
+          const contribPercent =
+            totalActivity === 0
+              ? 0
+              : Math.round((weight / totalActivity) * 100);
+
+          const row = document.createElement("div");
+          row.className = "member-row";
+          row.innerHTML = `
+                    <div style="font-weight: 600">${user.name}</div>
+                    <div style="font-size: 11px;">${user.skills.join(
+                      ", "
+                    )}</div>
+                    <div>${user.tasksActive}</div>
+                    <div>${user.tasksDone}</div>
+                    <div>
+                        <strong>${contribPercent}%</strong>
+                        <div class="progress-bar"><div class="progress-fill" style="width: ${contribPercent}%"></div></div>
+                    </div>
+                `;
+          table.appendChild(row);
+        });
+      }
+
+      function renderChat() {
+        const chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML = "";
+
+        state.messages.forEach((msg) => {
+          const isMe = msg.user === state.currentUser;
+          const div = document.createElement("div");
+          div.className = `message ${isMe ? "msg-sent" : "msg-received"}`;
+
+          // Read receipt simulation: If message time is older than other users' last seen, show "Read"
+          const readBy = state.users
+            .filter((u) => u.name !== msg.user && u.name !== state.currentUser)
+            .map((u) => u.name)
+            .join(", ");
+
+          div.innerHTML = `
+                    <div class="msg-info">${msg.user} • ${msg.time}</div>
+                    <div>${msg.text}</div>
+                    ${
+                      isMe
+                        ? `<div class="read-receipt">✓ Seen by ${readBy}</div>`
+                        : ""
+                    }
+                `;
+          chatBox.appendChild(div);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      function sendMessage() {
+        const input = document.getElementById("chat-input-field");
+        if (!input.value) return;
+
+        state.messages.push({
+          user: state.currentUser,
+          text: input.value,
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        });
+
+        // Reward activity in tracker
+        const user = state.users.find((u) => u.name === state.currentUser);
+        user.messages++;
+
+        input.value = "";
+        renderChat();
+      }
+
+      function renderFiles() {
+        const container = document.getElementById("file-display");
+        container.innerHTML = "";
+        state.files.forEach((file) => {
+          const card = document.createElement("div");
+          card.className = "file-card";
+          let icon = "📄";
+          if (file.type === "PDF") icon = "📕";
+          if (file.type === "Image") icon = "🖼️";
+
+          card.innerHTML = `
+                    <div class="file-icon">${icon}</div>
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-meta">${file.type} • ${file.size}</div>
+                    <div class="file-meta">${file.date}</div>
+                `;
+          container.appendChild(card);
+        });
+      }
+
+      function handleFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        state.files.unshift({
+          name: file.name,
+          type: file.name.split(".").pop().toUpperCase(),
+          size: (file.size / 1024).toFixed(1) + " KB",
+          date: new Date().toISOString().split("T")[0],
+        });
+        renderFiles();
+      }
+
+      function filterFiles(query) {
+        const filtered = state.files.filter((f) =>
+          f.name.toLowerCase().includes(query.toLowerCase())
+        );
+        // Temporary override of display for search
+        const container = document.getElementById("file-display");
+        container.innerHTML = "";
+        // (Standard render logic for filtered items...)
+      }
+
+      // Initialize
+      window.onload = () => {
+        renderDashboard();
+        // Allow "Enter" to send message
+        document
+          .getElementById("chat-input-field")
+          .addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+          });
+      };
+    </script>
+  </body>
+</html>
