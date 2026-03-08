@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UniGroup Workspace</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--txt:#1f2937;--sub:#6b7280;--pri:#2563eb;--ok:#10b981;--bor:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial;background:var(--bg);color:var(--txt)}
+header{padding:16px 24px;background:var(--card);border-bottom:1px solid var(--bor);display:flex;justify-content:space-between}
+h1{font-size:18px;margin:0}
+.layout{display:grid;grid-template-columns:280px 1fr 300px;gap:16px;padding:16px}
+.card{background:var(--card);border:1px solid var(--bor);border-radius:12px;padding:12px}
+.chat-list button{width:100%;text-align:left;padding:8px;margin:4px 0;border:1px solid var(--bor);border-radius:8px;background:#fff}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.col{border:1px dashed var(--bor);border-radius:12px;padding:8px;min-height:220px}
+.task{background:#fff;border:1px solid var(--bor);border-left:4px solid var(--pri);padding:8px;margin:8px 0;border-radius:8px;cursor:grab}
+.meta{font-size:12px;color:var(--sub)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input,select,button{padding:8px;border:1px solid var(--bor);border-radius:8px}
+button.pri{background:var(--pri);color:#fff;border:none}
+ul{margin:0;padding-left:18px}
+.contrib{display:flex;justify-content:space-between;font-size:13px}
+</style>
+</head>
+<body>
+<header><h1>UniGroup Workspace</h1><div class="meta">Prototype — no backend</div></header>
+<div class="layout">
+<div class="card">
+  <h3>Chat</h3>
+  <div class="chat-list">
+    <button data-c="#general"># general</button>
+    <button data-c="#tasks"># tasks</button>
+    <button data-c="@Mai">DM: Mai</button>
+  </div>
+  <div id="chat" style="height:240px;overflow:auto;border:1px solid var(--bor);border-radius:8px;padding:8px;margin-top:8px"></div>
+  <div class="row" style="margin-top:8px">
+    <input id="msg" placeholder="Message..." style="flex:1">
+    <button id="send" class="pri">Send</button>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Task Board</h3>
+  <div class="row">
+    <input id="taskTitle" placeholder="Task name">
+    <input id="taskSkills" placeholder="Skills needed (comma)">
+    <select id="taskPriority"><option>Low</option><option>Medium</option><option>High</option></select>
+    <button id="addTask" class="pri">Add & Assign</button>
+  </div>
+  <div class="board" style="margin-top:8px">
+    <div><h4>To Do</h4><div id="todo" class="col" ondrop="drop(event)" ondragover="allow(event)"></div></div>
+    <div><h4>In Progress</h4><div id="prog" class="col" ondrop="drop(event)" ondragover="allow(event)"></div></div>
+    <div><h4>Done</h4><div id="done" class="col" ondrop="drop(event)" ondragover="allow(event)"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Contributions</h3>
+  <div id="contrib"></div>
+  <h4 style="margin-top:12px">Files</h4>
+  <input type="file" id="fileInp" multiple>
+  <ul id="files"></ul>
+  <input id="filterFiles" placeholder="Filter files...">
+</div>
+</div>
+
+<script>
+const members=[
+ {name:'Alex',skills:['coding','research'],assigned:0,done:0,msgs:0,updates:0},
+ {name:'Mai',skills:['writing','presentation'],assigned:0,done:0,msgs:0,updates:0},
+ {name:'Sam',skills:['research','writing','coding'],assigned:0,done:0,msgs:0,updates:0}
+];
+let tasks=[],currentChannel='#general',messages={ '#general':[], '#tasks':[], '@Mai':[] };
+function el(id){return document.getElementById(id)}
+function renderContrib(){
+  const total=members.reduce((a,m)=>a+m.done+m.assigned+m.msgs+m.updates,1);
+  el('contrib').innerHTML=members.map(m=>{
+    const score=m.done+m.assigned+m.msgs+m.updates;
+    return `<div class="contrib"><b>${m.name}</b><span>${Math.round(score/total*100)}%</span></div>
+    <div class="meta">${m.done} done · ${m.assigned} assigned · ${m.msgs} msgs</div>`;
+  }).join('<hr>');
+}
+function bestMember(reqSkills){
+  return members.map(m=>{
+    const match=m.skills.filter(s=>reqSkills.includes(s)).length;
+    const load=m.assigned*1.5;
+    return {...m,score:match-load};
+  }).sort((a,b)=>b.score-a.score)[0];
+}
+function renderTasks(){
+  ['todo','prog','done'].forEach(id=>el(id).innerHTML='');
+  tasks.forEach(t=>{
+    const div=document.createElement('div');div.className='task';div.draggable=true;
+    div.id='t'+t.id;
+    div.ondragstart=e=>e.dataTransfer.setData('id',t.id);
+    div.innerHTML=`<div><b>${t.title}</b> <span class="meta">${t.priority}</span></div>
+    <div class="meta">${t.assignee} · due ${t.due}</div>`;
+    el(t.status).appendChild(div);
+  });
+}
+document.querySelectorAll('.chat-list button').forEach(b=>b.onclick=()=>{
+  currentChannel=b.dataset.c;renderChat();
+});
+function renderChat(){
+  el('chat').innerHTML=(messages[currentChannel]||[]).map(x=>`<div>${x}</div>`).join('');
+}
+el('send').onclick=()=>{
+  const m=el('msg').value;if(!m)return;
+  messages[currentChannel].push(`${new Date().toLocaleTimeString()} You: ${m}`);
+  members[0].msgs++;el('msg').value='';renderChat();renderContrib();
+};
+el('addTask').onclick=()=>{
+  const title=el('taskTitle').value;const skills=el('taskSkills').value.split(',').map(s=>s.trim());
+  if(!title)return;
+  const assignee=bestMember(skills).name;
+  tasks.push({id:Date.now(),title,assignee,status:'todo',priority:el('taskPriority').value,due:'2026-03-15'});
+  members.find(m=>m.name===assignee).assigned++;renderTasks();renderContrib();
+};
+function allow(e){e.preventDefault()}
+function drop(e){
+  e.preventDefault();const id=e.dataTransfer.getData('id');
+  const t=tasks.find(x=>x.id==id);if(!t)return;
+  t.status=e.target.id;
+  if(t.status==='done'){members.find(m=>m.name===t.assignee).done++;members.find(m=>m.name===t.assignee).assigned--;members.find(m=>m.name===t.assignee).updates++;}
+  renderTasks();renderContrib();
+}
+el('fileInp').onchange=e=>{
+  [...e.target.files].forEach(f=>{
+    const li=document.createElement('li');li.textContent=f.name;el('files').appendChild(li);
+  });
+};
+el('filterFiles').oninput=e=>{
+  const v=e.target.value.toLowerCase();
+  [...el('files').children].forEach(li=>li.style.display=li.textContent.toLowerCase().includes(v)?'':'none');
+};
+renderChat();renderContrib();
+</script>
+</body>
+</html>
