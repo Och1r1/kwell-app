@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kwell – User Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eeece8;
+    --surface: #ffffff;
+    --border: #e2e0db;
+    --text: #1a1a1a;
+    --text-muted: #888;
+    --text-light: #bbb;
+    --blue: #3b6ef8;
+    --blue-light: #eef1fe;
+    --green: #22c55e;
+    --orange: #f97316;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --sidebar-w: 56px;
+    --radius: 14px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w); background: #fff; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; padding: 12px 0;
+    position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; gap: 4px;
+  }
+  .sidebar .logo { margin-bottom: 12px; }
+  .nav-item {
+    width: 40px; height: 40px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px; border-radius: 10px; cursor: pointer;
+    transition: background .15s; color: var(--text-muted); text-decoration: none; border: none; background: none;
+  }
+  .nav-item:hover { background: var(--bg); }
+  .nav-item.active { background: var(--blue-light); color: var(--blue); }
+  .nav-item svg { width: 18px; height: 18px; }
+  .nav-label { font-size: 8px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
+  .sidebar-spacer { flex: 1; }
+  .avatar-sm {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--blue);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0; cursor: pointer;
+  }
+
+  /* ── MAIN ── */
+  .main-content { margin-left: var(--sidebar-w); padding: 36px 40px; min-height: 100vh; }
+  .page-title { font-size: 26px; font-weight: 700; margin-bottom: 28px; }
+  .page-title em { font-style: italic; color: var(--blue); font-family: 'DM Serif Display', serif; }
+
+  /* ── PROFILE LAYOUT ── */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 24px; box-shadow: var(--shadow);
+  }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .8px;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px;
+  }
+
+  /* ── IDENTITY CARD ── */
+  .identity-card { margin-bottom: 20px; }
+  .identity-top { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .big-avatar {
+    width: 64px; height: 64px; border-radius: 50%; background: var(--blue);
+    color: #fff; font-size: 24px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    position: relative;
+  }
+  .status-dot {
+    width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff;
+    position: absolute; bottom: 2px; right: 2px;
+  }
+  .identity-info .full-name { font-size: 20px; font-weight: 700; }
+  .identity-info .nickname { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Alert banner */
+  .alert-banner {
+    background: #fff8e1; border: 1px solid #fde68a; border-radius: 10px;
+    padding: 10px 14px; font-size: 13px; color: #92400e;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+  }
+  .alert-banner svg { flex-shrink: 0; width: 16px; height: 16px; color: #f59e0b; }
+
+  /* Status section */
+  .status-section { margin-bottom: 20px; }
+  .status-options { display: flex; flex-direction: column; gap: 8px; }
+  .status-option {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border: 1.5px solid var(--border); border-radius: 10px; cursor: pointer;
+    transition: border-color .15s, background .15s; font-size: 14px; font-weight: 500;
+    background: #fff;
+  }
+  .status-option:hover { border-color: #aaa; background: #fafafa; }
+  .status-option.selected { border-color: var(--blue); background: var(--blue-light); }
+  .status-option .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-online { background: var(--green); }
+  .dot-dnd { background: var(--red); }
+  .dot-idle { background: var(--yellow); }
+  .status-option .label { flex: 1; }
+  .status-option .sub { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+  /* DND time picker */
+  .dnd-times {
+    margin-top: 8px; margin-left: 20px; display: none; flex-direction: column; gap: 6px;
+  }
+  .dnd-times.visible { display: flex; }
+  .time-chip {
+    display: flex; align-items: center; gap: 8px; padding: 7px 12px;
+    background: var(--bg); border-radius: 8px; font-size: 13px; cursor: pointer;
+    transition: background .15s;
+  }
+  .time-chip:hover { background: #e2e0db; }
+  .time-chip.active { background: #fee2e2; color: #b91c1c; font-weight: 600; }
+  .time-chip svg { width: 13px; height: 13px; color: var(--text-muted); }
+
+  /* ── SKILLS CARD ── */
+  .skills-card { margin-bottom: 20px; }
+  .skills-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .skill-tag {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    background: var(--bg); border: 1.5px solid transparent; cursor: pointer;
+    transition: all .15s; position: relative;
+  }
+  .skill-tag:hover { border-color: var(--border); }
+  .skill-tag .remove {
+    width: 16px; height: 16px; border-radius: 50%; background: #ddd;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #666; cursor: pointer; transition: background .15s;
+  }
+  .skill-tag .remove:hover { background: #ef4444; color: #fff; }
+  .add-skill-row { display: flex; gap: 8px; }
+  .add-skill-input {
+    flex: 1; padding: 9px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-family: inherit; font-size: 13px; outline: none;
+  }
+  .add-skill-input:focus { border-color: var(--blue); }
+  .btn-add-skill {
+    padding: 9px 16px; background: var(--blue); color: #fff;
+    border: none; border-radius: 10px; font-family: inherit; font-size: 13px;
+    font-weight: 600; cursor: pointer;
+  }
+
+  /* ── PROJECTS ── */
+  .projects-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .btn-new-project {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; background: var(--blue); color: #fff;
+    border: none; border-radius: 50px; font-family: inherit; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: opacity .15s;
+  }
+  .btn-new-project:hover { opacity: .88; }
+
+  .project-card {
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; margin-bottom: 14px; background: #fff;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .project-card:hover { border-color: #ccc; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+  .project-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .project-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .project-name { font-size: 16px; font-weight: 700; }
+  .project-code { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .project-meta { display: flex; gap: 16px; font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+  .meta-item { display: flex; align-items: center; gap: 5px; }
+  .meta-item svg { width: 13px; height: 13px; }
+  .member-stack { display: flex; margin-left: 4px; }
+  .member-pip {
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff;
+    margin-left: -6px; font-size: 9px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .member-pip:first-child { margin-left: 0; }
+
+  .project-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .action-btn {
+    display: flex; align-items: center; gap: 5px; padding: 7px 14px;
+    border: 1.5px solid var(--border); border-radius: 20px; background: #fff;
+    font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .action-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .action-btn svg { width: 13px; height: 13px; }
+  .action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+  .btn-select {
+    margin-left: auto; padding: 7px 18px; background: var(--blue); color: #fff;
+    border: none; border-radius: 20px; font-family: inherit; font-size: 12px;
+    font-weight: 600; cursor: pointer;
+  }
+
+  /* ── MODALS ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35);
+    z-index: 999; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 18px; padding: 28px;
+    width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    animation: modalIn .2s ease;
+  }
+  @keyframes modalIn { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-family: inherit; font-size: 14px; outline: none;
+  }
+  .form-input:focus { border-color: var(--blue); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn-cancel {
+    padding: 10px 20px; border: 1.5px solid var(--border); border-radius: 50px;
+    background: #fff; font-family: inherit; font-size: 14px; cursor: pointer;
+  }
+  .btn-confirm {
+    padding: 10px 24px; background: var(--blue); color: #fff; border: none;
+    border-radius: 50px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Invite tags */
+  .invite-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 32px; }
+  .invite-tag {
+    display: flex; align-items: center; gap: 6px; background: var(--blue-light);
+    color: var(--blue); padding: 4px 10px; border-radius: 20px; font-size: 13px;
+  }
+  .invite-tag button { background: none; border: none; cursor: pointer; color: var(--blue); font-size: 14px; line-height: 1; }
+
+  /* Rename inline */
+  .rename-inline { display: none; margin-top: 12px; }
+  .rename-inline.visible { display: flex; gap: 8px; }
+  .rename-inline input {
+    flex: 1; padding: 9px 12px; border: 1.5px solid var(--blue);
+    border-radius: 8px; font-family: inherit; font-size: 14px; outline: none;
+  }
+  .rename-inline button {
+    padding: 9px 14px; background: var(--blue); color: #fff;
+    border: none; border-radius: 8px; font-family: inherit; font-size: 13px;
+    font-weight: 600; cursor: pointer;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; background: #1a1a1a; color: #fff;
+    padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500;
+    z-index: 9999; opacity: 0; transform: translateY(10px);
+    transition: all .3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <svg width="32" height="32" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="14" r="4" fill="#3b6ef8"/>
+      <circle cx="12" cy="26" r="3.5" fill="#f97316"/>
+      <circle cx="28" cy="26" r="3.5" fill="#22c55e"/>
+      <circle cx="20" cy="28" r="3" fill="#f59e0b"/>
+      <line x1="20" y1="18" x2="12" y2="23" stroke="#3b6ef8" stroke-width="1.5"/>
+      <line x1="20" y1="18" x2="28" y2="23" stroke="#3b6ef8" stroke-width="1.5"/>
+      <line x1="20" y1="18" x2="20" y2="25" stroke="#3b6ef8" stroke-width="1.5"/>
+    </svg>
+  </div>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span class="nav-label">Dash</span></a>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span class="nav-label">Tasks</span></a>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><span class="nav-label">Contrib</span></a>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><span class="nav-label">Todo</span></a>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg><span class="nav-label">Files</span></a>
+  <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="nav-label">Chats</span></a>
+  <div class="sidebar-spacer"></div>
+  <div class="avatar-sm active nav-item" style="background:var(--blue)">S</div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-content">
+  <h1 class="page-title">My <em>Profile</em></h1>
+
+  <div class="profile-grid">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- Identity -->
+      <div class="card identity-card">
+        <div class="section-label">Identity</div>
+        <div class="identity-top">
+          <div class="big-avatar" id="bigAvatar">
+            S
+            <div class="status-dot dot-online" id="statusDot"></div>
+          </div>
+          <div class="identity-info">
+            <div class="full-name" id="displayName">Sophie Johnson</div>
+            <div class="nickname" id="displayNickname">@sophie · she/her</div>
+          </div>
+        </div>
+
+        <!-- Alert -->
+        <div class="alert-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          INFO 2222: You are behind! Respond in 5 mins
+        </div>
+
+        <!-- Edit name row -->
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <input type="text" class="form-input" id="nameInput" value="Sophie Johnson" placeholder="Full name" style="flex:1">
+          <input type="text" class="form-input" id="nicknameInput" value="@sophie" placeholder="@nickname" style="width:110px">
+        </div>
+        <button onclick="saveName()" style="width:100%;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;">Save changes</button>
+      </div>
+
+      <!-- Status -->
+      <div class="card skills-card">
+        <div class="section-label">Availability Status</div>
+        <div class="status-options">
+
+          <div class="status-option selected" id="opt-online" onclick="selectStatus('online')">
+            <div class="dot dot-online"></div>
+            <div class="label">Online</div>
+          </div>
+
+          <div class="status-option" id="opt-dnd" onclick="selectStatus('dnd')">
+            <div class="dot dot-dnd"></div>
+            <div>
+              <div class="label">Do Not Disturb</div>
+              <div class="sub">You will not receive notifications</div>
+            </div>
+          </div>
+
+          <!-- DND time options -->
+          <div class="dnd-times" id="dndTimes">
+            <div class="time-chip" onclick="setDndTime(this,'15 minutes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>For 15 minutes</div>
+            <div class="time-chip" onclick="setDndTime(this,'1 hour')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>For 1 hour</div>
+            <div class="time-chip" onclick="setDndTime(this,'8 hours')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>For 8 hours</div>
+            <div class="time-chip" onclick="setDndTime(this,'24 hours')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>For 24 hours</div>
+            <div class="time-chip" onclick="setDndTime(this,'3 days')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>For 3 days</div>
+            <div class="time-chip" onclick="setDndTime(this,'Forever')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Forever</div>
+          </div>
+
+          <div class="status-option" id="opt-idle" onclick="selectStatus('idle')">
+            <div class="dot dot-idle"></div>
+            <div>
+              <div class="label">Idle</div>
+              <div class="sub">Away from keyboard</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="card">
+        <div class="section-label">My Skills</div>
+        <div class="skills-wrap" id="skillsWrap">
+          <span class="skill-tag">Coding <span class="remove" onclick="removeSkill(this)">×</span></span>
+          <span class="skill-tag">Presenting <span class="remove" onclick="removeSkill(this)">×</span></span>
+          <span class="skill-tag">Leadership <span class="remove" onclick="removeSkill(this)">×</span></span>
+          <span class="skill-tag">Data Analysis <span class="remove" onclick="removeSkill(this)">×</span></span>
+          <span class="skill-tag">Report Writing <span class="remove" onclick="removeSkill(this)">×</span></span>
+        </div>
+        <div class="add-skill-row">
+          <input type="text" class="add-skill-input" id="skillInput" placeholder="Add a skill…" onkeydown="if(event.key==='Enter')addSkill()">
+          <button class="btn-add-skill" onclick="addSkill()">+ Add</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: PROJECTS -->
+    <div>
+      <div class="card">
+        <div class="projects-header">
+          <div class="section-label" style="margin:0">My Projects</div>
+          <button class="btn-new-project" onclick="openNewProjectModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Project
+          </button>
+        </div>
+
+        <div id="projectsList">
+
+          <!-- Project 1 -->
+          <div class="project-card" id="proj-FINC2011">
+            <div class="project-top">
+              <div class="project-icon" style="background:#eef1fe">📊</div>
+              <div>
+                <div class="project-name" id="name-FINC2011">FINC2011</div>
+                <div class="project-code">Finance & Investment</div>
+              </div>
+              <button class="btn-select" onclick="showToast('Switched to FINC2011')">Select →</button>
+            </div>
+            <div class="project-meta">
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                4 members
+                <div class="member-stack">
+                  <div class="member-pip" style="background:#3b6ef8">S</div>
+                  <div class="member-pip" style="background:#f97316">R</div>
+                  <div class="member-pip" style="background:#22c55e">N</div>
+                  <div class="member-pip" style="background:#6366f1">+1</div>
+                </div>
+              </div>
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Due 15 Jun
+              </div>
+            </div>
+            <div class="project-actions">
+              <button class="action-btn" onclick="openInviteModal('FINC2011')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Invite members
+              </button>
+              <button class="action-btn" onclick="toggleRename('FINC2011')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Rename
+              </button>
+            </div>
+            <div class="rename-inline" id="rename-FINC2011">
+              <input type="text" placeholder="New group name…" id="renameInput-FINC2011">
+              <button onclick="applyRename('FINC2011')">Save</button>
+            </div>
+          </div>
+
+          <!-- Project 2 -->
+          <div class="project-card" id="proj-INFO1111">
+            <div class="project-top">
+              <div class="project-icon" style="background:#f0fdf4">💻</div>
+              <div>
+                <div class="project-name" id="name-INFO1111">INFO1111</div>
+                <div class="project-code">Intro to IT Systems</div>
+              </div>
+              <button class="btn-select" onclick="showToast('Switched to INFO1111')">Select →</button>
+            </div>
+            <div class="project-meta">
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                3 members
+                <div class="member-stack">
+                  <div class="member-pip" style="background:#3b6ef8">S</div>
+                  <div class="member-pip" style="background:#22c55e">J</div>
+                  <div class="member-pip" style="background:#ef4444">M</div>
+                </div>
+              </div>
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Due 20 May
+              </div>
+            </div>
+            <div class="project-actions">
+              <button class="action-btn" onclick="openInviteModal('INFO1111')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Invite members
+              </button>
+              <button class="action-btn" onclick="toggleRename('INFO1111')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Rename
+              </button>
+            </div>
+            <div class="rename-inline" id="rename-INFO1111">
+              <input type="text" placeholder="New group name…" id="renameInput-INFO1111">
+              <button onclick="applyRename('INFO1111')">Save</button>
+            </div>
+          </div>
+
+          <!-- Project 3 (active) -->
+          <div class="project-card" id="proj-INFO2222" style="border-color:var(--blue);background:var(--blue-light)">
+            <div class="project-top">
+              <div class="project-icon" style="background:#fff">🎓</div>
+              <div>
+                <div class="project-name" id="name-INFO2222">INFO2222</div>
+                <div class="project-code">Data &amp; Collaboration Systems</div>
+              </div>
+              <button class="btn-select" style="background:#fff;color:var(--blue);border:1.5px solid var(--blue)" onclick="showToast('Already on INFO2222')">Active ✓</button>
+            </div>
+            <div class="project-meta">
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                5 members
+                <div class="member-stack">
+                  <div class="member-pip" style="background:#3b6ef8">S</div>
+                  <div class="member-pip" style="background:#f97316">Su</div>
+                  <div class="member-pip" style="background:#22c55e">R</div>
+                  <div class="member-pip" style="background:#6366f1">N</div>
+                  <div class="member-pip" style="background:#ef4444">+1</div>
+                </div>
+              </div>
+              <div class="meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Due 17 May
+              </div>
+            </div>
+            <div class="project-actions">
+              <button class="action-btn" onclick="openInviteModal('INFO2222')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Invite members
+              </button>
+              <button class="action-btn" onclick="toggleRename('INFO2222')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Rename group
+              </button>
+            </div>
+            <div class="rename-inline" id="rename-INFO2222">
+              <input type="text" placeholder="New group name…" id="renameInput-INFO2222">
+              <button onclick="applyRename('INFO2222')">Save</button>
+            </div>
+          </div>
+
+        </div><!-- /projectsList -->
+      </div>
+    </div>
+
+  </div><!-- /profile-grid -->
+</div>
+
+<!-- ═══ MODAL: Add New Project ═══ -->
+<div class="modal-overlay" id="newProjectModal">
+  <div class="modal">
+    <div class="modal-title">
+      Add New Project
+      <button class="modal-close" onclick="closeModal('newProjectModal')">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Project Code / Name</label>
+      <input type="text" class="form-input" id="newProjName" placeholder="e.g. INFO3333">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description (optional)</label>
+      <input type="text" class="form-input" id="newProjDesc" placeholder="Short description…">
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Due Date</label>
+        <input type="date" class="form-input" id="newProjDate">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Max Members</label>
+        <input type="number" class="form-input" id="newProjMembers" placeholder="e.g. 5" min="1" max="20">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Invite Members (optional)</label>
+      <div class="invite-tags" id="newProjTags"></div>
+      <input type="text" class="form-input" id="newProjInvite" placeholder="Type @email and press Enter" onkeydown="if(event.key==='Enter')addNewProjTag()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('newProjectModal')">Cancel</button>
+      <button class="btn-confirm" onclick="createProject()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Invite Members ═══ -->
+<div class="modal-overlay" id="inviteModal">
+  <div class="modal">
+    <div class="modal-title">
+      Invite to <span id="inviteProjectName">Project</span>
+      <button class="modal-close" onclick="closeModal('inviteModal')">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Add by email (@edu.au)</label>
+      <div class="invite-tags" id="inviteTags"></div>
+      <input type="text" class="form-input" id="inviteInput" placeholder="e.g. name@uni.edu.au" onkeydown="if(event.key==='Enter')addInviteTag()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Change Group Name</label>
+      <input type="text" class="form-input" id="inviteGroupName" placeholder="New group name…">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('inviteModal')">Cancel</button>
+      <button class="btn-confirm" onclick="applyInvite()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATUS ──
+  const statusColors = { online:'#22c55e', dnd:'#ef4444', idle:'#f59e0b' };
+  function selectStatus(s) {
+    ['online','dnd','idle'].forEach(id => {
+      document.getElementById('opt-'+id).classList.toggle('selected', id===s);
+    });
+    document.getElementById('statusDot').style.background = statusColors[s];
+    document.getElementById('dndTimes').classList.toggle('visible', s==='dnd');
+    showToast('Status set to ' + s.toUpperCase());
+  }
+  function setDndTime(el, label) {
+    document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    showToast('DND set for ' + label);
+  }
+
+  // ── NAME SAVE ──
+  function saveName() {
+    document.getElementById('displayName').textContent = document.getElementById('nameInput').value;
+    document.getElementById('displayNickname').textContent = document.getElementById('nicknameInput').value + ' · she/her';
+    showToast('Profile updated!');
+  }
+
+  // ── SKILLS ──
+  function addSkill() {
+    const inp = document.getElementById('skillInput');
+    const val = inp.value.trim();
+    if (!val) return;
+    const tag = document.createElement('span');
+    tag.className = 'skill-tag';
+    tag.innerHTML = val + ' <span class="remove" onclick="removeSkill(this)">×</span>';
+    document.getElementById('skillsWrap').appendChild(tag);
+    inp.value = '';
+    showToast('Skill added!');
+  }
+  function removeSkill(el) {
+    el.parentElement.remove();
+  }
+
+  // ── RENAME (inline) ──
+  function toggleRename(id) {
+    const el = document.getElementById('rename-'+id);
+    el.classList.toggle('visible');
+    if (el.classList.contains('visible')) {
+      document.getElementById('renameInput-'+id).focus();
+    }
+  }
+  function applyRename(id) {
+    const val = document.getElementById('renameInput-'+id).value.trim();
+    if (!val) return;
+    document.getElementById('name-'+id).textContent = val;
+    document.getElementById('rename-'+id).classList.remove('visible');
+    showToast('Group renamed to "' + val + '"');
+  }
+
+  // ── INVITE MODAL ──
+  let currentInviteProject = '';
+  function openInviteModal(id) {
+    currentInviteProject = id;
+    document.getElementById('inviteProjectName').textContent = id;
+    document.getElementById('inviteTags').innerHTML = '';
+    document.getElementById('inviteInput').value = '';
+    document.getElementById('inviteGroupName').value = '';
+    openModal('inviteModal');
+  }
+  function addInviteTag() {
+    const inp = document.getElementById('inviteInput');
+    const val = inp.value.trim();
+    if (!val) return;
+    const tag = document.createElement('div');
+    tag.className = 'invite-tag';
+    tag.innerHTML = val + ' <button onclick="this.parentElement.remove()">×</button>';
+    document.getElementById('inviteTags').appendChild(tag);
+    inp.value = '';
+  }
+  function applyInvite() {
+    const name = document.getElementById('inviteGroupName').value.trim();
+    if (name) {
+      document.getElementById('name-'+currentInviteProject).textContent = name;
+    }
+    const count = document.getElementById('inviteTags').children.length;
+    closeModal('inviteModal');
+    showToast(count ? count + ' member(s) invited!' : 'Group updated!');
+  }
+
+  // ── NEW PROJECT MODAL ──
+  function openNewProjectModal() {
+    document.getElementById('newProjTags').innerHTML = '';
+    document.getElementById('newProjName').value = '';
+    document.getElementById('newProjDesc').value = '';
+    document.getElementById('newProjInvite').value = '';
+    openModal('newProjectModal');
+  }
+  function addNewProjTag() {
+    const inp = document.getElementById('newProjInvite');
+    const val = inp.value.trim();
+    if (!val) return;
+    const tag = document.createElement('div');
+    tag.className = 'invite-tag';
+    tag.innerHTML = val + ' <button onclick="this.parentElement.remove()">×</button>';
+    document.getElementById('newProjTags').appendChild(tag);
+    inp.value = '';
+  }
+  const emojis = ['📊','💡','🔬','🎨','🖥️','📝','🚀','🎓'];
+  const colors = ['#eef1fe','#f0fdf4','#fff7ed','#fdf4ff','#fef9c3'];
+  function createProject() {
+    const name = document.getElementById('newProjName').value.trim();
+    if (!name) { document.getElementById('newProjName').focus(); return; }
+    const desc = document.getElementById('newProjDesc').value || 'New project';
+    const date = document.getElementById('newProjDate').value;
+    const emoji = emojis[Math.floor(Math.random()*emojis.length)];
+    const color = colors[Math.floor(Math.random()*colors.length)];
+    const id = name.replace(/\s+/g,'-');
+
+    const html = `
+      <div class="project-card" id="proj-${id}">
+        <div class="project-top">
+          <div class="project-icon" style="background:${color}">${emoji}</div>
+          <div>
+            <div class="project-name" id="name-${id}">${name}</div>
+            <div class="project-code">${desc}</div>
+          </div>
+          <button class="btn-select" onclick="showToast('Switched to ${name}')">Select →</button>
+        </div>
+        <div class="project-meta">
+          <div class="meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            1 member
+            <div class="member-stack"><div class="member-pip" style="background:#3b6ef8">S</div></div>
+          </div>
+          ${date ? `<div class="meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Due ${date}</div>` : ''}
+        </div>
+        <div class="project-actions">
+          <button class="action-btn" onclick="openInviteModal('${id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            Invite members
+          </button>
+          <button class="action-btn" onclick="toggleRename('${id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Rename
+          </button>
+        </div>
+        <div class="rename-inline" id="rename-${id}">
+          <input type="text" placeholder="New group name…" id="renameInput-${id}">
+          <button onclick="applyRename('${id}')">Save</button>
+        </div>
+      </div>`;
+    document.getElementById('projectsList').insertAdjacentHTML('beforeend', html);
+    closeModal('newProjectModal');
+    showToast('Project "' + name + '" created!');
+  }
+
+  // ── MODAL HELPERS ──
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+  });
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>
