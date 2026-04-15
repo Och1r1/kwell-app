@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String    // Hashed password (bcrypt)
+  salt         String    // Unique salt per user
+  publicKey    String?   // For E2EE (optional, for later)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+// Message model for chat
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String   // Encrypted message content (for E2EE)
+  senderId   Int
+  receiverId Int
+  createdAt  DateTime @default(now())
+
+  // Relations
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}

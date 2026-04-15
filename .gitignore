@@ -1,2 +1,12 @@
+# macOS
 ._*
 .DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log

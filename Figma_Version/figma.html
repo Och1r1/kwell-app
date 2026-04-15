@@ -548,11 +548,11 @@
         <p class="auth-sub">Already have an account? <a href="#" onclick="showPage('page-login')">Log in</a></p>
         <div class="field-group">
           <div class="field-label">What should we call you?</div>
-          <input type="text" class="auth-input" placeholder="Enter your profile name">
+          <input type="text" id="signup-username" class="auth-input" placeholder="Enter your profile name">
         </div>
         <div class="field-group">
           <div class="field-label">What's your email?</div>
-          <input type="email" class="auth-input" placeholder="Enter your email address">
+          <input type="email" id="signup-email" class="auth-input" placeholder="Enter your email address">
         </div>
         <div class="field-group">
           <div class="field-label">
@@ -562,11 +562,13 @@
               Hide
             </span>
           </div>
-          <input type="password" class="auth-input" placeholder="Enter your password">
+          <input type="password" id="signup-password" class="auth-input" placeholder="Enter your password">
           <p class="hint">Use 8 or more characters with a mix of letters, numbers &amp; symbols</p>
         </div>
+        <div id="signup-error" style="display:none;color:#ef4444;font-size:13px;margin-bottom:10px;text-align:center;background:#fef2f2;padding:10px;border-radius:8px;"></div>
+        <div id="signup-success" style="display:none;color:#22c55e;font-size:13px;margin-bottom:10px;text-align:center;background:#f0fdf4;padding:10px;border-radius:8px;"></div>
         <p class="terms">By creating an account, you agree to the <a href="#">Terms of use</a> and <a href="#">Privacy Policy.</a></p>
-        <button class="btn-primary" onclick="showPage('page-dashboard')">Create an account</button>
+        <button class="btn-primary" onclick="handleSignup()">Create an account</button>
         <div class="or-divider">OR Continue with</div>
         <div class="social-btns">
           <button class="social-btn">
@@ -1145,80 +1147,37 @@
           <div class="pinned-label">📌 PINNED</div>
           <div style="font-size:13px;color:#a16207">› Meeting on Saturday for the demo</div>
         </div>
-        <div class="chat-messages">
-          <div class="day-divider">Yesterday</div>
+        <div class="chat-messages" id="chat-messages">
+          <!-- Messages will be loaded here dynamically -->
+          <div class="day-divider">Welcome to E2EE Chat</div>
           <div class="msg-group">
-            <div class="msg-sender">Sophie</div>
-            <div class="msg-bubble">Hey team, just pushed the latest wireframes to Figma. Let me know your thoughts ✨✨</div>
-            <div class="msg-with-avatar">
-              <div class="avatar-sm" style="background:#3b6ef8;width:28px;height:28px;font-size:11px;flex-shrink:0;margin-top:2px">S</div>
-              <div>
-                <div class="msg-bubble">Also reminder — demo rehearsal is Saturday at 2pm!</div>
-                <div class="msg-time">12:30 am · 2 days ago</div>
-              </div>
-            </div>
-          </div>
-          <div class="msg-group">
-            <div class="msg-sender">Nathan</div>
-            <div class="msg-with-avatar">
-              <div class="avatar-sm" style="background:#6366f1;width:28px;height:28px;font-size:11px;flex-shrink:0;margin-top:2px">N</div>
-              <div>
-                <div class="msg-bubble">Looks great! I left a few comments on the dashboard flow. The task overview section feels a bit cramped on mobile.</div>
-                <div class="msg-time">08:10 am · yesterday</div>
-              </div>
-            </div>
-          </div>
-          <div class="day-divider">Today</div>
-          <div class="msg-group">
-            <div class="msg-sender">Ryan</div>
-            <div class="msg-with-avatar">
-              <div class="avatar-sm" style="background:#22c55e;width:28px;height:28px;font-size:11px;flex-shrink:0;margin-top:2px">R</div>
-              <div>
-                <div class="msg-photo">🖼</div>
-                <div class="msg-photo-caption">Uploaded a photo · 02:00 am · today</div>
-              </div>
+            <div class="msg-sender">System</div>
+            <div class="msg-bubble" style="background:#f0fdf4;color:#166534;">
+              🔒 Messages are end-to-end encrypted. Only you and the recipient can read them.
             </div>
           </div>
         </div>
         <div class="chat-input-bar">
-          <input type="text" class="chat-input" placeholder="Insert text...">
+          <input type="text" class="chat-input" id="chat-input" placeholder="Type an encrypted message..." onkeydown="if(event.key==='Enter')sendChatMessage()">
           <button class="chat-icon-btn">🖼</button>
           <button class="chat-icon-btn">📎</button>
-          <button class="send-btn">➤</button>
+          <button class="send-btn" onclick="sendChatMessage()">➤</button>
         </div>
       </div>
-      <!-- Online panel -->
+      <!-- Online panel - Users list -->
       <div class="online-panel">
-        <h4>Online</h4>
-        <div class="online-user">
-          <div class="avatar-sm" style="background:#3b6ef8">S</div>
-          <div class="online-info">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div class="online-name">Sophie</div>
-              <span class="status-badge sb-respond">Respond ASAP</span>
-            </div>
-            <div class="online-status">Last work: 26 Mar</div>
-          </div>
+        <h4>Users</h4>
+        <div id="users-list">
+          <!-- Users will be loaded dynamically -->
+          <div style="font-size:12px;color:var(--text-muted);padding:10px;">Loading users...</div>
         </div>
-        <div class="online-user">
-          <div class="avatar-sm" style="background:#22c55e">R</div>
-          <div class="online-info">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div class="online-name">Rohin</div>
-              <span class="status-badge sb-available">Available</span>
-            </div>
-            <div class="online-status">Online now</div>
-          </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <h4 style="margin-bottom:10px;">Selected Chat</h4>
+          <div id="selected-user" style="font-size:13px;color:var(--text-muted);">Click a user to start chatting</div>
         </div>
-        <div class="online-user">
-          <div class="avatar-sm" style="background:#6366f1">N</div>
-          <div class="online-info">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div class="online-name">Nick</div>
-              <span class="status-badge sb-busy">Busy tonight</span>
-            </div>
-            <div class="online-status">Last online: 4h ago</div>
-          </div>
+        <div style="margin-top:16px;">
+          <button onclick="generateMyKeys()" class="btn-primary" style="width:100%;padding:10px;font-size:12px;">🔑 Generate E2EE Keys</button>
+          <p id="key-status" style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;"></p>
         </div>
       </div>
     </div>
@@ -1554,16 +1513,399 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- API Client for Backend Communication -->
+<script src="api-client.js"></script>
+<script src="socket-client.js"></script>
 <script>
-function handleLogin() {
+async function handleLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const err = document.getElementById('login-error');
-  if (email === 'test@kwell.com' && password === 'password123') {
-    err.style.display = 'none';
-    showPage('page-dashboard');
-  } else {
+  const btn = document.querySelector('#page-login .btn-primary');
+
+  // Validate inputs
+  if (!email || !password) {
+    err.textContent = 'Please enter both email and password.';
     err.style.display = 'block';
+    return;
+  }
+
+  // Show loading state
+  btn.textContent = 'Logging in...';
+  btn.disabled = true;
+  err.style.display = 'none';
+
+  try {
+    // Call backend API (sent over HTTPS)
+    const data = await KwellAPI.AuthAPI.login(email, password);
+    console.log('Login successful:', data.user.username);
+
+    // Update UI with user info
+    updateUserUI(data.user);
+
+    // Initialize Socket.IO for real-time messaging
+    if (window.SocketClient) {
+      window.SocketClient.initialize();
+    }
+
+    // Navigate to dashboard
+    showPage('page-dashboard');
+    showToast('Welcome back, ' + data.user.username + '!');
+  } catch (error) {
+    console.error('Login error:', error);
+    err.textContent = error.message || 'Invalid email or password. Try again.';
+    err.style.display = 'block';
+  } finally {
+    btn.textContent = 'Log in';
+    btn.disabled = false;
+  }
+}
+
+async function handleSignup() {
+  const username = document.getElementById('signup-username').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const err = document.getElementById('signup-error');
+  const success = document.getElementById('signup-success');
+  const btn = document.querySelector('#page-signup .btn-primary');
+
+  // Validate inputs
+  if (!username || !email || !password) {
+    err.textContent = 'Please fill in all fields.';
+    err.style.display = 'block';
+    success.style.display = 'none';
+    return;
+  }
+
+  if (password.length < 8) {
+    err.textContent = 'Password must be at least 8 characters.';
+    err.style.display = 'block';
+    success.style.display = 'none';
+    return;
+  }
+
+  // Show loading state
+  btn.textContent = 'Creating account...';
+  btn.disabled = true;
+  err.style.display = 'none';
+  success.style.display = 'none';
+
+  try {
+    // Call backend API (sent over HTTPS)
+    const data = await KwellAPI.AuthAPI.register(username, email, password);
+    console.log('Registration successful');
+
+    // Save the private key that was auto-generated
+    if (data.privateKey) {
+      KwellAPI.Session.savePrivateKey(data.privateKey);
+      console.log('E2EE private key saved');
+    }
+
+    // Show success message
+    success.textContent = 'Account created with E2EE keys! Redirecting to login...';
+    success.style.display = 'block';
+
+    // Redirect to login after short delay
+    setTimeout(() => {
+      showPage('page-login');
+      showToast('Account created! Please log in.');
+    }, 1500);
+  } catch (error) {
+    console.error('Signup error:', error);
+    err.textContent = error.message || 'Registration failed. Try again.';
+    err.style.display = 'block';
+  } finally {
+    btn.textContent = 'Create an account';
+    btn.disabled = false;
+  }
+}
+
+function updateUserUI(user) {
+  // Update avatar initials in sidebar
+  const avatars = document.querySelectorAll('.avatar-sm');
+  const initials = user.username.charAt(0).toUpperCase();
+  avatars.forEach(a => a.textContent = initials);
+
+  // Store user info for later use
+  window.currentUser = user;
+}
+
+function handleLogout() {
+  // Disconnect Socket.IO
+  if (window.SocketClient) {
+    window.SocketClient.disconnect();
+  }
+
+  KwellAPI.AuthAPI.logout();
+  window.currentUser = null;
+  showPage('page-login');
+  showToast('Logged out successfully');
+}
+
+// ============================================================
+// E2EE CHAT FUNCTIONS
+// ============================================================
+
+// Make these global for Socket.IO client access
+window.selectedUserId = null;
+window.selectedUserName = null;
+let selectedUserId = null;
+let selectedUserName = null;
+const userColors = ['#3b6ef8', '#22c55e', '#6366f1', '#f97316', '#ef4444', '#8b5cf6'];
+
+// Load users list when chat page is shown
+async function loadUsersList() {
+  const usersList = document.getElementById('users-list');
+  if (!usersList) return;
+
+  try {
+    const data = await KwellAPI.UsersAPI.getAll();
+    const currentUser = KwellAPI.Session.getUser();
+
+    if (!data.users || data.users.length === 0) {
+      usersList.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:10px;">No users found</div>';
+      return;
+    }
+
+    // Filter out current user and render list
+    const otherUsers = data.users.filter(u => currentUser && u.id !== currentUser.id);
+
+    if (otherUsers.length === 0) {
+      usersList.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:10px;">No other users yet</div>';
+      return;
+    }
+
+    usersList.innerHTML = otherUsers.map((user, idx) => `
+      <div class="online-user" style="cursor:pointer;${selectedUserId === user.id ? 'background:var(--blue-light);' : ''}" onclick="selectUser(${user.id}, '${user.username}')">
+        <div class="avatar-sm" style="background:${userColors[idx % userColors.length]}">${user.username.charAt(0).toUpperCase()}</div>
+        <div class="online-info">
+          <div class="online-name">${user.username}</div>
+          <div class="online-status" style="font-size:11px;">${user.publicKey ? '🔐 E2EE Ready' : '⚠️ No keys'}</div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    console.error('Failed to load users:', error);
+    usersList.innerHTML = '<div style="font-size:12px;color:#ef4444;padding:10px;">Failed to load users</div>';
+  }
+}
+
+// Select a user to chat with
+function selectUser(userId, username) {
+  selectedUserId = userId;
+  selectedUserName = username;
+  // Also set on window for Socket.IO client
+  window.selectedUserId = userId;
+  window.selectedUserName = username;
+
+  const selectedDiv = document.getElementById('selected-user');
+  if (selectedDiv) {
+    selectedDiv.innerHTML = `<strong>${username}</strong> (ID: ${userId})`;
+  }
+
+  // Reload users list to show selection
+  loadUsersList();
+
+  // Load messages with this user
+  loadMessages();
+
+  showToast('Chatting with ' + username);
+}
+
+// Generate E2EE keys for current user
+async function generateMyKeys() {
+  const keyStatus = document.getElementById('key-status');
+
+  if (!KwellAPI.Session.isLoggedIn()) {
+    showToast('Please log in first');
+    return;
+  }
+
+  try {
+    keyStatus.textContent = 'Generating keys...';
+    const data = await KwellAPI.KeysAPI.generateKeyPair();
+
+    keyStatus.innerHTML = '✅ Keys generated!<br><small style="color:#ef4444;">Private key stored in session only</small>';
+    showToast('E2EE keys generated successfully!');
+
+    // Reload users to show updated key status
+    loadUsersList();
+
+  } catch (error) {
+    console.error('Key generation failed:', error);
+    keyStatus.textContent = '❌ ' + error.message;
+  }
+}
+
+// Send encrypted message
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  if (!selectedUserId) {
+    showToast('Please select a user to chat with');
+    return;
+  }
+
+  if (!KwellAPI.Session.isLoggedIn()) {
+    showToast('Please log in first');
+    return;
+  }
+
+  try {
+    // Get recipient's public key
+    const recipientData = await KwellAPI.KeysAPI.getPublicKey(selectedUserId);
+
+    if (!recipientData.publicKey) {
+      showToast('Recipient has not generated E2EE keys yet');
+      return;
+    }
+
+    // Encrypt message client-side
+    const encrypted = await KwellAPI.Crypto.encryptMessage(message, recipientData.publicKey);
+    const encryptedJson = JSON.stringify(encrypted);
+
+    // Store plaintext locally so we can read our own sent messages
+    KwellAPI.Session.saveSentMessage(selectedUserId, encryptedJson, message);
+
+    // Send encrypted message to server (for persistence)
+    await KwellAPI.MessagesAPI.send(selectedUserId, encryptedJson);
+
+    // Also send via Socket.IO (for real-time delivery)
+    if (window.SocketClient && window.SocketClient.isConnected()) {
+      window.SocketClient.sendMessage(selectedUserId, encryptedJson);
+    }
+
+    // Add message to UI (show plaintext since we sent it)
+    addMessageToUI(message, true, new Date());
+
+    // Clear input
+    input.value = '';
+
+    showToast('🔒 Message sent!');
+
+  } catch (error) {
+    console.error('Failed to send message:', error);
+    showToast('Failed: ' + error.message);
+  }
+}
+
+// Load messages with selected user
+async function loadMessages() {
+  const messagesDiv = document.getElementById('chat-messages');
+  if (!messagesDiv || !selectedUserId) return;
+
+  const currentUser = KwellAPI.Session.getUser();
+  if (!currentUser) return;
+
+  try {
+    // Get conversation with selected user
+    const data = await KwellAPI.MessagesAPI.getConversation(selectedUserId);
+
+    // Mark messages as mine or not
+    const allMessages = (data.messages || []).map(m => ({
+      ...m,
+      isMine: m.senderId === currentUser.id
+    }));
+
+    // Render messages
+    messagesDiv.innerHTML = `
+      <div class="day-divider">Chat with ${selectedUserName}</div>
+      <div class="msg-group">
+        <div class="msg-bubble" style="background:#f0fdf4;color:#166534;font-size:12px;">
+          🔒 End-to-end encrypted conversation
+        </div>
+      </div>
+    `;
+
+    for (const msg of allMessages) {
+      try {
+        let plaintext = msg.content;
+
+        // Try to decrypt if it's JSON (encrypted)
+        if (msg.content.startsWith('{')) {
+          if (msg.isMine) {
+            // For sent messages, try to get from local storage
+            const stored = KwellAPI.Session.getSentMessage(msg.content);
+            plaintext = stored || '[Encrypted - sent by you]';
+          } else {
+            // For received messages, decrypt with private key
+            const privateKey = KwellAPI.Session.getPrivateKey();
+            if (privateKey) {
+              const encrypted = JSON.parse(msg.content);
+              plaintext = await KwellAPI.Crypto.decryptMessage(encrypted, privateKey);
+            } else {
+              plaintext = '[Encrypted - no private key]';
+            }
+          }
+        }
+
+        addMessageToUI(plaintext, msg.isMine, new Date(msg.createdAt));
+      } catch (e) {
+        addMessageToUI('[Decryption failed]', msg.isMine, new Date(msg.createdAt));
+      }
+    }
+
+    // Scroll to bottom
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  } catch (error) {
+    console.error('Failed to load messages:', error);
+  }
+}
+
+// Add a message to the chat UI
+function addMessageToUI(text, isMine, timestamp) {
+  const messagesDiv = document.getElementById('chat-messages');
+  if (!messagesDiv) return;
+
+  const currentUser = KwellAPI.Session.getUser();
+  const senderName = isMine ? (currentUser?.username || 'You') : selectedUserName;
+  const initial = senderName.charAt(0).toUpperCase();
+  const color = isMine ? '#3b6ef8' : '#22c55e';
+  const time = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const msgHtml = `
+    <div class="msg-group" style="${isMine ? 'text-align:right;' : ''}">
+      <div class="msg-sender" style="${isMine ? 'text-align:right;' : ''}">${senderName}</div>
+      <div class="msg-with-avatar" style="${isMine ? 'flex-direction:row-reverse;' : ''}">
+        <div class="avatar-sm" style="background:${color};width:28px;height:28px;font-size:11px;flex-shrink:0;margin-top:2px">${initial}</div>
+        <div>
+          <div class="msg-bubble" style="${isMine ? 'background:var(--blue-light);' : ''}">${text}</div>
+          <div class="msg-time" style="${isMine ? 'text-align:right;' : ''}">${time}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// Override showPage to load chat data when navigating to chats
+const originalShowPage = showPage;
+showPage = function(id) {
+  originalShowPage(id);
+
+  // Load chat data when entering chat page
+  if (id === 'page-chats' && KwellAPI.Session.isLoggedIn()) {
+    loadUsersList();
+
+    // Check if user has keys
+    const user = KwellAPI.Session.getUser();
+    const keyStatus = document.getElementById('key-status');
+    if (keyStatus) {
+      if (KwellAPI.Session.getPrivateKey()) {
+        keyStatus.innerHTML = '✅ Keys active';
+      } else if (user?.publicKey) {
+        keyStatus.innerHTML = '⚠️ Keys generated but private key not in session.<br><small>Generate new keys to decrypt messages.</small>';
+      } else {
+        keyStatus.innerHTML = 'No keys yet - generate to enable E2EE';
+      }
+    }
   }
 }
 
