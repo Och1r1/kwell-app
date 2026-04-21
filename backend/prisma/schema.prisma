@@ -17,13 +17,38 @@ model User {
   email        String    @unique
   passwordHash String    // Hashed password (bcrypt)
   salt         String    // Unique salt per user
-  publicKey    String?   // For E2EE (optional, for later)
+  publicKey    String?   // For E2EE
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  // Profile fields
+  role         String?   // e.g., "Team Lead", "Developer"
+  status       String    @default("online") // online, dnd, idle
+  skills       String?   // JSON array of skill names e.g. ["coding", "design"]
 
   // Relations
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  assignedTasks    Task[]    @relation("AssignedTasks")
+}
+
+// Task model for task management
+model Task {
+  id             Int       @id @default(autoincrement())
+  title          String
+  description    String?
+  deadline       DateTime?
+  estimatedHours Float?    // Estimated hours to complete
+  priority       String    @default("medium") // low, medium, high
+  status         String    @default("pending") // pending, in_progress, completed
+  requiredSkills String?   // JSON array of required skills
+
+  // Assignment
+  assignedToId   Int?
+  assignedTo     User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 // Message model for chat

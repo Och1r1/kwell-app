@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { generateToken } from '@/lib/jwt'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
@@ -27,10 +28,17 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify password
-    // Reconstruct the salted password and compare with hash
-    const saltedPassword = user.salt + password
-    const isPasswordValid = await bcrypt.compare(saltedPassword, user.passwordHash)
+    // ============================================================
+    // VULNERABLE VERSION - MD5 (for Task 2 demonstration)
+    // ============================================================
+    const inputHash = crypto.createHash('md5').update(password).digest('hex')
+    const isPasswordValid = inputHash === user.passwordHash
+
+    // ============================================================
+    // SECURE VERSION - bcrypt (comment out above, uncomment below)
+    // ============================================================
+    // const saltedPassword = user.salt + password
+    // const isPasswordValid = await bcrypt.compare(saltedPassword, user.passwordHash)
 
     if (!isPasswordValid) {
       return Response.json(

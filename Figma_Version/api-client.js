@@ -292,6 +292,155 @@ const MessagesAPI = {
 };
 
 // ============================================================
+// Tasks API
+// ============================================================
+
+const TasksAPI = {
+  /**
+   * Get all tasks
+   * @param {Object} filters - Optional filters { status, assignedTo }
+   * @returns {Promise<Object>} - { tasks: [...] }
+   */
+  async getAll(filters = {}) {
+    let query = '';
+    if (filters.status) query += `status=${filters.status}&`;
+    if (filters.assignedTo) query += `assignedTo=${filters.assignedTo}&`;
+    return apiRequest(`/tasks${query ? '?' + query : ''}`);
+  },
+
+  /**
+   * Create a new task
+   * @param {Object} task - { title, description, deadline, estimatedHours, priority, requiredSkills, assignedToId }
+   * @returns {Promise<Object>}
+   */
+  async create(task) {
+    return apiRequest('/tasks', {
+      method: 'POST',
+      body: JSON.stringify(task)
+    });
+  },
+
+  /**
+   * Update a task
+   * @param {number} id - Task ID
+   * @param {Object} updates - Fields to update
+   * @returns {Promise<Object>}
+   */
+  async update(id, updates) {
+    return apiRequest('/tasks', {
+      method: 'PUT',
+      body: JSON.stringify({ id, ...updates })
+    });
+  },
+
+  /**
+   * Delete a task
+   * @param {number} id - Task ID
+   * @returns {Promise<Object>}
+   */
+  async delete(id) {
+    return apiRequest(`/tasks?id=${id}`, {
+      method: 'DELETE'
+    });
+  }
+};
+
+// ============================================================
+// Team API
+// ============================================================
+
+const TeamAPI = {
+  /**
+   * Get all team members with skills and workload
+   * @returns {Promise<Object>} - { members: [...] }
+   */
+  async getMembers() {
+    return apiRequest('/team');
+  }
+};
+
+// ============================================================
+// Profile API
+// ============================================================
+
+const ProfileAPI = {
+  /**
+   * Get current user's profile
+   * @returns {Promise<Object>}
+   */
+  async get() {
+    return apiRequest('/users/profile');
+  },
+
+  /**
+   * Update current user's profile
+   * @param {Object} updates - { role, status, skills }
+   * @returns {Promise<Object>}
+   */
+  async update(updates) {
+    return apiRequest('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(updates)
+    });
+  },
+
+  /**
+   * Add a skill to current user
+   * @param {string} skill - Skill name
+   * @returns {Promise<Object>}
+   */
+  async addSkill(skill) {
+    const profile = await this.get();
+    const skills = profile.skills || [];
+    if (!skills.includes(skill)) {
+      skills.push(skill);
+    }
+    return this.update({ skills });
+  },
+
+  /**
+   * Remove a skill from current user
+   * @param {string} skill - Skill name
+   * @returns {Promise<Object>}
+   */
+  async removeSkill(skill) {
+    const profile = await this.get();
+    const skills = (profile.skills || []).filter(s => s !== skill);
+    return this.update({ skills });
+  }
+};
+
+// ============================================================
+// AI Delegate API
+// ============================================================
+
+const AIDelegateAPI = {
+  /**
+   * Generate AI task delegation suggestions
+   * @param {Object} options - { taskIds, sortBy }
+   * @returns {Promise<Object>} - { suggestion, assignments, tasks, members }
+   */
+  async generateSuggestions(options = {}) {
+    return apiRequest('/ai-delegate', {
+      method: 'POST',
+      body: JSON.stringify(options)
+    });
+  },
+
+  /**
+   * Apply AI suggestions (assign tasks to members)
+   * @param {Array} assignments - [{ taskId, memberId }, ...]
+   * @returns {Promise<Object>}
+   */
+  async applySuggestions(assignments) {
+    return apiRequest('/ai-delegate', {
+      method: 'PUT',
+      body: JSON.stringify({ assignments })
+    });
+  }
+};
+
+// ============================================================
 // E2EE Encryption (Client-Side using Web Crypto API)
 // ============================================================
 
@@ -483,6 +632,10 @@ window.KwellAPI = {
   KeysAPI,
   UsersAPI,
   MessagesAPI,
+  TasksAPI,
+  TeamAPI,
+  ProfileAPI,
+  AIDelegateAPI,
   Crypto,
   sendSecureMessage,
   decryptReceivedMessage

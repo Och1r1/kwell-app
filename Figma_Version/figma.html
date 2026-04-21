@@ -808,55 +808,57 @@
     </nav>
     <div class="main-content">
       <h1 class="page-title"><span style="color:var(--blue);font-style:italic;font-family:'DM Serif Display',serif">AI</span> Task Delegator</h1>
-      <div class="card prompt-card">
-        <div class="section-label">Prompt</div>
-        <div class="prompt-row">
-          Insert your committed time:
-          <input type="number" class="num-input" value="0"> hours
-          &nbsp;&nbsp; Insert required skills
-          <span class="skill-tag">coding</span>
+
+      <!-- Create Task Form -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="section-label">Create New Task</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="ai-task-title" placeholder="Task title" style="flex:2;padding:8px 12px;border:1px solid #ddd;border-radius:6px;min-width:200px;">
+          <input type="number" id="ai-task-hours" placeholder="Hours" style="width:80px;padding:8px 12px;border:1px solid #ddd;border-radius:6px;">
+          <select id="ai-task-priority" style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+          <input type="text" id="ai-task-skills" placeholder="Skills (comma-separated)" style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:6px;min-width:150px;">
+          <button onclick="createTask()" class="btn-primary" style="padding:8px 16px;">+ Add Task</button>
         </div>
+      </div>
+
+      <div class="card prompt-card">
+        <div class="section-label">Delegation Settings</div>
         <div class="sort-row">
           Sort by:
-          <button class="sort-pill active">Workload</button>
-          <button class="sort-pill">Due date</button>
-          <button class="sort-pill">Availability</button>
-          <button class="sort-pill">Skills</button>
+          <button class="sort-pill active" onclick="setSortBy('workload', this)">Workload</button>
+          <button class="sort-pill" onclick="setSortBy('skills', this)">Skills</button>
+          <button class="sort-pill" onclick="setSortBy('availability', this)">Availability</button>
         </div>
       </div>
       <div class="two-col">
         <div class="card">
           <div class="chart-header">
-            <div class="section-label" style="margin:0">Expected Time to Finish New Tasks</div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)">
-              Sort <div class="sort-toggle"><button class="toggle-btn active">Ascend</button><button class="toggle-btn">Descend</button></div>
-            </div>
+            <div class="section-label" style="margin:0">Unassigned Tasks</div>
           </div>
-          <div class="bar-row"><span class="bar-label">Task a</span><div class="bar-outer"><div class="bar-inner task-a" style="width:22%">2h 10m</div></div></div>
-          <div class="bar-row"><span class="bar-label">Task b</span><div class="bar-outer"><div class="bar-inner task-b" style="width:40%">4h</div></div></div>
-          <div class="bar-row"><span class="bar-label">Task c</span><div class="bar-outer"><div class="bar-inner task-c" style="width:75%">7h 30m</div></div></div>
-          <div class="x-axis"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span></div>
-          <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px">10 hours +</div>
+          <div id="ai-tasks-list" style="max-height:200px;overflow-y:auto;">
+            <div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading tasks...</div>
+          </div>
         </div>
         <div class="card">
           <div class="chart-header">
-            <div class="section-label" style="margin:0">Skills Match</div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)">
-              Sort <div class="sort-toggle"><button class="toggle-btn active">Ascend</button><button class="toggle-btn">Descend</button></div>
-            </div>
+            <div class="section-label" style="margin:0">Team Members</div>
           </div>
-          <div class="skills-row"><span class="idx">a</span><span style="flex:1">Sophie</span><span class="badge badge-high">HIGH</span></div>
-          <div class="skills-row"><span class="idx">b</span><span style="flex:1">Nick, Sugar</span><span class="badge badge-med">MED</span></div>
-          <div class="skills-row"><span class="idx">c</span><span style="flex:1">Nick, Sugar, Robin, Sophie</span><span class="badge badge-low">LOW</span></div>
+          <div id="ai-team-list" style="max-height:200px;overflow-y:auto;">
+            <div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">Loading team...</div>
+          </div>
         </div>
       </div>
       <div class="ai-suggestion">
-        <div>
+        <div style="flex:1;">
           <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px;">✦ AI Suggestion</div>
-          <p>Based on skills, availability and workload — <b>Sophie</b> should own task A, <b>Nick</b> takes task B, and task C is split between <b>Rohin &amp; Sugar</b>.</p>
-          <a class="view-link">→ View in To-do list</a>
+          <p id="ai-suggestion-text">Click "Generate" to get AI-powered task delegation suggestions based on team skills and workload.</p>
+          <a class="view-link" onclick="applyAISuggestions()" id="ai-apply-link" style="display:none;">→ Apply these assignments</a>
         </div>
-        <button class="btn-gen">✦ Generate</button>
+        <button class="btn-gen" onclick="generateAISuggestions()" id="ai-generate-btn">✦ Generate</button>
       </div>
     </div>
   </div>
@@ -1885,34 +1887,33 @@ function addMessageToUI(text, isMine, timestamp) {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Override showPage to load chat data when navigating to chats
-const originalShowPage = showPage;
-showPage = function(id) {
-  originalShowPage(id);
-
-  // Load chat data when entering chat page
-  if (id === 'page-chats' && KwellAPI.Session.isLoggedIn()) {
-    loadUsersList();
-
-    // Check if user has keys
-    const user = KwellAPI.Session.getUser();
-    const keyStatus = document.getElementById('key-status');
-    if (keyStatus) {
-      if (KwellAPI.Session.getPrivateKey()) {
-        keyStatus.innerHTML = '✅ Keys active';
-      } else if (user?.publicKey) {
-        keyStatus.innerHTML = '⚠️ Keys generated but private key not in session.<br><small>Generate new keys to decrypt messages.</small>';
-      } else {
-        keyStatus.innerHTML = 'No keys yet - generate to enable E2EE';
-      }
-    }
-  }
-}
-
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
+
+  // Load page-specific data
+  if (window.KwellAPI?.Session?.isLoggedIn()) {
+    if (id === 'page-chats') {
+      loadUsersList();
+      // Check if user has keys
+      const user = KwellAPI.Session.getUser();
+      const keyStatus = document.getElementById('key-status');
+      if (keyStatus) {
+        if (KwellAPI.Session.getPrivateKey()) {
+          keyStatus.innerHTML = '✅ Keys active';
+        } else if (user?.publicKey) {
+          keyStatus.innerHTML = '⚠️ Keys generated but private key not in session.<br><small>Generate new keys to decrypt messages.</small>';
+        } else {
+          keyStatus.innerHTML = 'No keys yet - generate to enable E2EE';
+        }
+      }
+    } else if (id === 'page-aitasks') {
+      loadAITasksPage();
+    } else if (id === 'page-profile') {
+      loadProfile();
+    }
+  }
 }
 
 // Generate waveform
@@ -1933,7 +1934,7 @@ if (wf) {
 // ── PROFILE PAGE FUNCTIONS ──
 // Status
 const statusColors = { online:'#22c55e', dnd:'#ef4444', idle:'#f59e0b' };
-function selectStatus(s) {
+async function selectStatus(s) {
   ['online','dnd','idle'].forEach(id => {
     const el = document.getElementById('opt-'+id);
     if (el) el.classList.toggle('selected', id===s);
@@ -1942,6 +1943,15 @@ function selectStatus(s) {
   if (dot) dot.style.background = statusColors[s];
   const dnd = document.getElementById('dndTimes');
   if (dnd) dnd.classList.toggle('visible', s==='dnd');
+
+  // Sync with backend
+  if (window.KwellAPI?.Session?.isLoggedIn()) {
+    try {
+      await window.KwellAPI.ProfileAPI.update({ status: s });
+    } catch (error) {
+      console.error('Update status error:', error);
+    }
+  }
   showToast('Status set to ' + s.toUpperCase());
 }
 function setDndTime(el, label) {
@@ -1961,22 +1971,74 @@ function saveName() {
   showToast('Profile updated!');
 }
 
-// Skills
-function addSkill() {
+// Skills - with backend sync
+async function addSkill() {
   const inp = document.getElementById('skillInput');
   if (!inp) return;
   const val = inp.value.trim();
   if (!val) return;
+
+  // Add to UI immediately
   const tag = document.createElement('span');
   tag.className = 'profile-skill-tag';
+  tag.setAttribute('data-skill', val);
   tag.innerHTML = val + ' <span class="remove" onclick="removeSkill(this)">×</span>';
   const wrap = document.getElementById('skillsWrap');
   if (wrap) wrap.appendChild(tag);
   inp.value = '';
-  showToast('Skill added!');
+
+  // Sync with backend if logged in
+  if (window.KwellAPI?.Session?.isLoggedIn()) {
+    try {
+      await window.KwellAPI.ProfileAPI.addSkill(val);
+      showToast('Skill added!');
+    } catch (error) {
+      console.error('Add skill error:', error);
+      showToast('Skill added locally');
+    }
+  } else {
+    showToast('Skill added!');
+  }
 }
-function removeSkill(el) {
-  el.parentElement.remove();
+
+async function removeSkill(el) {
+  const skillTag = el.parentElement;
+  const skillName = skillTag.getAttribute('data-skill') || skillTag.textContent.replace('×', '').trim();
+  skillTag.remove();
+
+  // Sync with backend if logged in
+  if (window.KwellAPI?.Session?.isLoggedIn()) {
+    try {
+      await window.KwellAPI.ProfileAPI.removeSkill(skillName);
+      showToast('Skill removed');
+    } catch (error) {
+      console.error('Remove skill error:', error);
+    }
+  }
+}
+
+// Load profile from backend
+async function loadProfile() {
+  if (!window.KwellAPI?.Session?.isLoggedIn()) return;
+
+  try {
+    const profile = await window.KwellAPI.ProfileAPI.get();
+
+    // Update skills display
+    const wrap = document.getElementById('skillsWrap');
+    if (wrap && profile.skills) {
+      wrap.innerHTML = profile.skills.map(skill =>
+        `<span class="profile-skill-tag" data-skill="${skill}">${skill} <span class="remove" onclick="removeSkill(this)">×</span></span>`
+      ).join('');
+    }
+
+    // Update status
+    if (profile.status) {
+      selectStatus(profile.status);
+    }
+  } catch (error) {
+    console.error('Load profile error:', error);
+  }
 }
 
 // Rename (inline)
@@ -2128,6 +2190,176 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
+
+// ═══════════════ AI TASK DELEGATOR FUNCTIONS ═══════════════
+
+let aiCurrentSortBy = 'workload';
+let aiCurrentAssignments = [];
+
+// Create a new task
+async function createTask() {
+  if (!window.KwellAPI?.Session?.isLoggedIn()) {
+    showToast('Please login first');
+    return;
+  }
+
+  const title = document.getElementById('ai-task-title').value.trim();
+  const hours = parseFloat(document.getElementById('ai-task-hours').value) || null;
+  const priority = document.getElementById('ai-task-priority').value;
+  const skillsInput = document.getElementById('ai-task-skills').value.trim();
+  const requiredSkills = skillsInput ? skillsInput.split(',').map(s => s.trim()) : [];
+
+  if (!title) {
+    showToast('Please enter a task title');
+    return;
+  }
+
+  try {
+    await window.KwellAPI.TasksAPI.create({
+      title,
+      estimatedHours: hours,
+      priority,
+      requiredSkills
+    });
+
+    // Clear form
+    document.getElementById('ai-task-title').value = '';
+    document.getElementById('ai-task-hours').value = '';
+    document.getElementById('ai-task-skills').value = '';
+
+    showToast('Task created!');
+    loadAITasksPage();
+  } catch (error) {
+    console.error('Create task error:', error);
+    showToast('Failed to create task: ' + error.message);
+  }
+}
+
+// Load AI Tasks page data
+async function loadAITasksPage() {
+  if (!window.KwellAPI?.Session?.isLoggedIn()) {
+    return;
+  }
+
+  try {
+    // Load tasks
+    const tasksResponse = await window.KwellAPI.TasksAPI.getAll({ status: 'pending' });
+    const tasks = tasksResponse.tasks || [];
+
+    // Load team members
+    const teamResponse = await window.KwellAPI.TeamAPI.getMembers();
+    const members = teamResponse.members || [];
+
+    // Render tasks list
+    const tasksList = document.getElementById('ai-tasks-list');
+    if (tasksList) {
+      if (tasks.length === 0) {
+        tasksList.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">No unassigned tasks. Create one above!</div>';
+      } else {
+        tasksList.innerHTML = tasks.map(task => `
+          <div class="bar-row" style="padding:8px 0;border-bottom:1px solid #eee;">
+            <span class="bar-label" style="font-weight:500;">${task.title}</span>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--text-muted);">
+              ${task.estimatedHours ? `<span>${task.estimatedHours}h</span>` : ''}
+              <span class="badge badge-${task.priority === 'high' ? 'high' : task.priority === 'low' ? 'low' : 'med'}">${task.priority.toUpperCase()}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Render team list
+    const teamList = document.getElementById('ai-team-list');
+    if (teamList) {
+      if (members.length === 0) {
+        teamList.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">No team members yet.</div>';
+      } else {
+        teamList.innerHTML = members.map(member => `
+          <div class="skills-row" style="padding:8px 0;border-bottom:1px solid #eee;">
+            <span style="flex:1;font-weight:500;">${member.username}</span>
+            <span style="font-size:12px;color:var(--text-muted);">${member.workload.activeTasks} tasks (${member.workload.totalEstimatedHours}h)</span>
+          </div>
+        `).join('');
+      }
+    }
+  } catch (error) {
+    console.error('Load AI tasks page error:', error);
+  }
+}
+
+// Set sort by option
+function setSortBy(sortBy, btn) {
+  aiCurrentSortBy = sortBy;
+  document.querySelectorAll('.sort-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// Generate AI suggestions
+async function generateAISuggestions() {
+  if (!window.KwellAPI?.Session?.isLoggedIn()) {
+    showToast('Please login first');
+    return;
+  }
+
+  const btn = document.getElementById('ai-generate-btn');
+  const suggestionText = document.getElementById('ai-suggestion-text');
+  const applyLink = document.getElementById('ai-apply-link');
+
+  btn.textContent = '⏳ Generating...';
+  btn.disabled = true;
+
+  try {
+    const result = await window.KwellAPI.AIDelegateAPI.generateSuggestions({
+      sortBy: aiCurrentSortBy
+    });
+
+    aiCurrentAssignments = result.assignments || [];
+
+    if (result.suggestion) {
+      suggestionText.innerHTML = result.suggestion;
+      if (aiCurrentAssignments.length > 0) {
+        applyLink.style.display = 'block';
+      }
+    } else {
+      suggestionText.textContent = 'No tasks to assign or no team members available.';
+      applyLink.style.display = 'none';
+    }
+
+    showToast('AI suggestions generated!');
+  } catch (error) {
+    console.error('Generate suggestions error:', error);
+    suggestionText.textContent = 'Failed to generate suggestions: ' + error.message;
+    applyLink.style.display = 'none';
+  } finally {
+    btn.textContent = '✦ Generate';
+    btn.disabled = false;
+  }
+}
+
+// Apply AI suggestions
+async function applyAISuggestions() {
+  if (aiCurrentAssignments.length === 0) {
+    showToast('No assignments to apply');
+    return;
+  }
+
+  try {
+    await window.KwellAPI.AIDelegateAPI.applySuggestions(aiCurrentAssignments);
+    showToast('Tasks assigned successfully!');
+
+    // Refresh the page data
+    loadAITasksPage();
+
+    // Reset UI
+    document.getElementById('ai-suggestion-text').textContent = 'Assignments applied! Generate new suggestions for remaining tasks.';
+    document.getElementById('ai-apply-link').style.display = 'none';
+    aiCurrentAssignments = [];
+  } catch (error) {
+    console.error('Apply suggestions error:', error);
+    showToast('Failed to apply: ' + error.message);
+  }
+}
+
 </script>
 </body>
 </html>

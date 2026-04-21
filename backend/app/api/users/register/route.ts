@@ -30,13 +30,19 @@ export async function POST(request: Request) {
       )
     }
 
-    // Generate a unique salt for this user
-    const salt = crypto.randomBytes(16).toString('hex')
+    // ============================================================
+    // VULNERABLE VERSION - MD5 (for Task 2 demonstration)
+    // MD5 is cryptographically broken and can be cracked instantly
+    // ============================================================
+    const salt = 'not-used-in-vulnerable-version'
+    const passwordHash = crypto.createHash('md5').update(password).digest('hex')
 
-    // Hash the password with bcrypt (includes its own salt internally)
-    // We also prepend our custom salt for extra security
-    const saltedPassword = salt + password
-    const passwordHash = await bcrypt.hash(saltedPassword, 12) // 12 rounds
+    // ============================================================
+    // SECURE VERSION - bcrypt (comment out above, uncomment below)
+    // ============================================================
+    // const salt = crypto.randomBytes(16).toString('hex')
+    // const saltedPassword = salt + password
+    // const passwordHash = await bcrypt.hash(saltedPassword, 12) // 12 rounds
 
     // Auto-generate E2EE key pair for the user
     const { publicKey, privateKey } = generateKeyPair()
