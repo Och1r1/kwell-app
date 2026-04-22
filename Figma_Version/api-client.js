@@ -441,6 +441,62 @@ const AIDelegateAPI = {
 };
 
 // ============================================================
+// Dashboard API
+// ============================================================
+
+const DashboardAPI = {
+  /**
+   * Get dashboard statistics
+   * @returns {Promise<Object>} - { stats, activeTasks }
+   */
+  async getStats() {
+    return apiRequest('/dashboard');
+  }
+};
+
+// ============================================================
+// Contribution API
+// ============================================================
+
+const ContributionAPI = {
+  /**
+   * Get contribution statistics for all team members
+   * @returns {Promise<Object>} - { members, summary }
+   */
+  async getStats() {
+    return apiRequest('/contribution');
+  }
+};
+
+// ============================================================
+// Channels API (Group Chat)
+// ============================================================
+
+const ChannelsAPI = {
+  /**
+   * Get messages for a channel
+   * @param {string} channel - Channel name (general, coding, design, meetings)
+   * @returns {Promise<Object>} - { messages: [...] }
+   */
+  async getMessages(channel) {
+    return apiRequest(`/channels?channel=${channel}`);
+  },
+
+  /**
+   * Send a message to a channel
+   * @param {string} channel - Channel name
+   * @param {string} content - Message content
+   * @returns {Promise<Object>}
+   */
+  async sendMessage(channel, content) {
+    return apiRequest('/channels', {
+      method: 'POST',
+      body: JSON.stringify({ channel, content })
+    });
+  }
+};
+
+// ============================================================
 // E2EE Encryption (Client-Side using Web Crypto API)
 // ============================================================
 
@@ -632,10 +688,13 @@ window.KwellAPI = {
   KeysAPI,
   UsersAPI,
   MessagesAPI,
+  ChannelsAPI,
   TasksAPI,
   TeamAPI,
   ProfileAPI,
   AIDelegateAPI,
+  DashboardAPI,
+  ContributionAPI,
   Crypto,
   sendSecureMessage,
   decryptReceivedMessage

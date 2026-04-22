@@ -29,16 +29,17 @@ export async function POST(request: Request) {
     }
 
     // ============================================================
-    // VULNERABLE VERSION - MD5 (for Task 2 demonstration)
+    // SECURE VERSION - bcrypt
     // ============================================================
-    const inputHash = crypto.createHash('md5').update(password).digest('hex')
-    const isPasswordValid = inputHash === user.passwordHash
+    const saltedPassword = user.salt + password
+    const isPasswordValid = await bcrypt.compare(saltedPassword, user.passwordHash)
 
     // ============================================================
-    // SECURE VERSION - bcrypt (comment out above, uncomment below)
+    // VULNERABLE VERSION - MD5 (for Task 2 demonstration only)
+    // Uncomment below and comment above to demo weak password storage
     // ============================================================
-    // const saltedPassword = user.salt + password
-    // const isPasswordValid = await bcrypt.compare(saltedPassword, user.passwordHash)
+    // const inputHash = crypto.createHash('md5').update(password).digest('hex')
+    // const isPasswordValid = inputHash === user.passwordHash
 
     if (!isPasswordValid) {
       return Response.json(

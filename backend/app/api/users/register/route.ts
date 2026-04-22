@@ -31,18 +31,18 @@ export async function POST(request: Request) {
     }
 
     // ============================================================
-    // VULNERABLE VERSION - MD5 (for Task 2 demonstration)
-    // MD5 is cryptographically broken and can be cracked instantly
+    // SECURE VERSION - bcrypt
     // ============================================================
-    const salt = 'not-used-in-vulnerable-version'
-    const passwordHash = crypto.createHash('md5').update(password).digest('hex')
+    const salt = crypto.randomBytes(16).toString('hex')
+    const saltedPassword = salt + password
+    const passwordHash = await bcrypt.hash(saltedPassword, 12) // 12 rounds
 
     // ============================================================
-    // SECURE VERSION - bcrypt (comment out above, uncomment below)
+    // VULNERABLE VERSION - MD5 (for Task 2 demonstration only)
+    // Uncomment below and comment above to demo weak password storage
     // ============================================================
-    // const salt = crypto.randomBytes(16).toString('hex')
-    // const saltedPassword = salt + password
-    // const passwordHash = await bcrypt.hash(saltedPassword, 12) // 12 rounds
+    // const salt = 'not-used-in-vulnerable-version'
+    // const passwordHash = crypto.createHash('md5').update(password).digest('hex')
 
     // Auto-generate E2EE key pair for the user
     const { publicKey, privateKey } = generateKeyPair()

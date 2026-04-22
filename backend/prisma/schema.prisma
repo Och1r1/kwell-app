@@ -27,9 +27,10 @@ model User {
   skills       String?   // JSON array of skill names e.g. ["coding", "design"]
 
   // Relations
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
-  assignedTasks    Task[]    @relation("AssignedTasks")
+  sentMessages     Message[]        @relation("SentMessages")
+  receivedMessages Message[]        @relation("ReceivedMessages")
+  assignedTasks    Task[]           @relation("AssignedTasks")
+  channelMessages  ChannelMessage[] @relation("ChannelMessages")
 }
 
 // Task model for task management
@@ -51,7 +52,7 @@ model Task {
   updatedAt      DateTime  @updatedAt
 }
 
-// Message model for chat
+// Message model for direct chat (E2EE)
 model Message {
   id         Int      @id @default(autoincrement())
   content    String   // Encrypted message content (for E2EE)
@@ -62,4 +63,16 @@ model Message {
   // Relations
   sender   User @relation("SentMessages", fields: [senderId], references: [id])
   receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+// Channel message model for group chat (not E2EE - visible to all)
+model ChannelMessage {
+  id        Int      @id @default(autoincrement())
+  channel   String   // Channel name: general, coding, design, meetings
+  content   String   // Plain text message (not encrypted for group visibility)
+  senderId  Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  sender User @relation("ChannelMessages", fields: [senderId], references: [id])
 }
