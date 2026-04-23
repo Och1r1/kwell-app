@@ -9,13 +9,11 @@
 const SOCKET_IO_CDN = 'https://cdn.socket.io/4.7.4/socket.io.min.js';
 
 // ============================================================
-// DEPLOYMENT CONFIG - Change this URL after deploying to Render
+// DEPLOYMENT CONFIG
 // ============================================================
-// For local development (separate socket server):
-// const SOCKET_URL = 'https://localhost:3001';
-// For Render.com deployment (same server as API, replace with your URL):
-const SOCKET_URL = 'https://localhost:3001';
-// Example: const SOCKET_URL = 'https://kwell-backend.onrender.com';
+// For local development: const SOCKET_URL = 'https://localhost:3001';
+// For production:
+const SOCKET_URL = 'https://kwell-app.onrender.com';
 
 let socket = null;
 let isConnected = false;

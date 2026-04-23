@@ -9,13 +9,11 @@
  */
 
 // ============================================================
-// DEPLOYMENT CONFIG - Change this URL after deploying to Render
+// DEPLOYMENT CONFIG
 // ============================================================
-// For local development:
-// const API_BASE_URL = 'https://localhost:3000/api';
-// For Render.com deployment (replace with your actual URL):
-const API_BASE_URL = 'https://localhost:3000/api';
-// Example: const API_BASE_URL = 'https://kwell-backend.onrender.com/api';
+// For local development: const API_BASE_URL = 'https://localhost:3000/api';
+// For production:
+const API_BASE_URL = 'https://kwell-app.onrender.com/api';
 
 // ============================================================
 // Session Management (JWT Token Storage)
