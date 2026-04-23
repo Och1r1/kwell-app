@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key'
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h'
@@ -13,9 +13,10 @@ export interface JWTPayload {
  * Generate a JWT token for a user
  */
 export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  })
+  const options: SignOptions = {
+    expiresIn: JWT_EXPIRES_IN as string,
+  }
+  return jwt.sign(payload, JWT_SECRET, options)
 }
 
 /**
