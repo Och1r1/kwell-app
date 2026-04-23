@@ -13,10 +13,8 @@ export interface JWTPayload {
  * Generate a JWT token for a user
  */
 export function generateToken(payload: JWTPayload): string {
-  const options: SignOptions = {
-    expiresIn: JWT_EXPIRES_IN as string,
-  }
-  return jwt.sign(payload, JWT_SECRET, options)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as any)
 }
 
 /**
