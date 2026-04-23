@@ -6,9 +6,11 @@
     "dev": "next dev --webpack",
     "dev:https": "next dev --webpack --experimental-https --experimental-https-key ./certs/server.key --experimental-https-cert ./certs/server.crt",
     "socket": "node socket-server.js",
-    "build": "next build",
-    "start": "next start",
+    "build": "npx prisma generate && next build",
+    "start": "node server-production.js",
+    "start:next": "next start",
     "start:socket": "NODE_ENV=production node server.js",
+    "postinstall": "npx prisma generate",
     "lint": "eslint"
   },
   "dependencies": {
